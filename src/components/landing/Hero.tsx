@@ -25,7 +25,7 @@ const Hero = () => (
           <Button asChild size="lg" className="bg-primary hover:bg-citric-dark text-primary-foreground font-semibold text-base px-8 rounded-full">
             <a href="#tienda">Comprar ahora</a>
           </Button>
-          <Button asChild variant="outline" size="lg" className="border-background/40 text-background hover:bg-background/10 font-semibold text-base px-8 rounded-full">
+          <Button asChild size="lg" className="bg-whatsapp hover:bg-whatsapp/90 text-white border-0 font-semibold text-base px-8 rounded-full">
             <a href="https://wa.me/584121234567" target="_blank" rel="noopener noreferrer">
               <MessageCircle className="mr-2 h-5 w-5" /> Escríbenos por WhatsApp
             </a>
