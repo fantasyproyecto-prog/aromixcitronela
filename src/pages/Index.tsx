@@ -1,16 +1,34 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import Navbar from "@/components/landing/Navbar";
+import Hero from "@/components/landing/Hero";
+import Problem from "@/components/landing/Problem";
+import Solution from "@/components/landing/Solution";
+import Benefits from "@/components/landing/Benefits";
+import Uses from "@/components/landing/Uses";
+import Characteristics from "@/components/landing/Characteristics";
+import Shop from "@/components/landing/Shop";
+import Distributors from "@/components/landing/Distributors";
+import DistributorForms from "@/components/landing/DistributorForms";
+import ClosingFooter from "@/components/landing/ClosingFooter";
+import CartDrawer from "@/components/CartDrawer";
+import CheckoutForm from "@/components/CheckoutForm";
+import { CartProvider } from "@/contexts/CartContext";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
-  return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
-    </div>
-  );
-};
-
-const Index = PlaceholderIndex;
+const Index = () => (
+  <CartProvider>
+    <Navbar />
+    <Hero />
+    <Problem />
+    <Solution />
+    <Benefits />
+    <Uses />
+    <Characteristics />
+    <Shop />
+    <Distributors />
+    <DistributorForms />
+    <ClosingFooter />
+    <CartDrawer />
+    <CheckoutForm />
+  </CartProvider>
+);
 
 export default Index;
