@@ -22,7 +22,7 @@ const products = [
 ];
 
 const Shop = () => {
-  const { addItem, tasaBCV } = useCart();
+  const { addItem, tasaBCV, tasaLoading } = useCart();
 
   return (
     <section id="tienda" className="section-padding">
@@ -39,7 +39,7 @@ const Shop = () => {
                 <p className="text-muted-foreground text-sm">{p.description}</p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-2xl font-extrabold text-primary">${p.priceUSD.toFixed(2)}</span>
-                  <span className="text-sm text-muted-foreground">/ Bs {(p.priceUSD * tasaBCV).toFixed(2)}</span>
+                  <span className="text-sm text-muted-foreground">/ {tasaLoading ? "Cargando..." : `Bs ${(p.priceUSD * tasaBCV).toFixed(2)}`}</span>
                 </div>
                 <Button onClick={() => addItem({ id: p.id, name: p.name, priceUSD: p.priceUSD, image: p.image })} className="w-full bg-primary hover:bg-citric-dark text-primary-foreground font-semibold rounded-full">
                   <ShoppingCart className="mr-2 h-4 w-4" /> Añadir al carrito

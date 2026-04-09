@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 
 export interface CartItem {
   id: string;
@@ -11,6 +11,7 @@ export interface CartItem {
 interface CartContextType {
   items: CartItem[];
   tasaBCV: number;
+  tasaLoading: boolean;
   setTasaBCV: (rate: number) => void;
   addItem: (item: Omit<CartItem, "quantity">) => void;
   removeItem: (id: string) => void;
@@ -29,9 +30,24 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
-  const [tasaBCV, setTasaBCV] = useState(36.5);
+  const [tasaBCV, setTasaBCV] = useState(0);
+  const [tasaLoading, setTasaLoading] = useState(true);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+
+  useEffect(() => {
+    fetch("https://bcv-api.rafnixg.dev/rates/")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.dollar) setTasaBCV(data.dollar);
+        else throw new Error("No dollar rate");
+      })
+      .catch((err) => {
+        console.warn("Error fetching BCV rate, using fallback:", err);
+        setTasaBCV(75);
+      })
+      .finally(() => setTasaLoading(false));
+  }, []);
 
   const addItem = useCallback((item: Omit<CartItem, "quantity">) => {
     setItems((prev) => {
@@ -58,7 +74,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, tasaBCV, setTasaBCV, addItem, removeItem, updateQuantity, clearCart, totalUSD, totalBs, itemCount, isCartOpen, setIsCartOpen, isCheckoutOpen, setIsCheckoutOpen }}>
+    <CartContext.Provider value={{ items, tasaBCV, tasaLoading, setTasaBCV, addItem, removeItem, updateQuantity, clearCart, totalUSD, totalBs, itemCount, isCartOpen, setIsCartOpen, isCheckoutOpen, setIsCheckoutOpen }}>
       {children}
     </CartContext.Provider>
   );
