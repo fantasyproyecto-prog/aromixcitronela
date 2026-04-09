@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
+import { toast } from "sonner";
 
 export interface CartItem {
   id: string;
@@ -28,6 +29,51 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+const FALLBACK_RATE = 36.50;
+
+async function fetchWithTimeout(url: string, timeoutMs = 5000): Promise<Response> {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    return res;
+  } finally {
+    clearTimeout(id);
+  }
+}
+
+async function fetchBCVRate(): Promise<{ rate: number; offline: boolean }> {
+  // Try primary API
+  try {
+    const res = await fetchWithTimeout("https://pydolarvenezuela-api.vercel.app/api/v1/dollar?page=bcv");
+    if (res.ok) {
+      const data = await res.json();
+      // The response structure: { monitors: { usd: { price: number } } } or similar
+      const price = data?.monitors?.usd?.price ?? data?.dollar ?? data?.price;
+      if (price && typeof price === "number" && price > 0) {
+        return { rate: price, offline: false };
+      }
+    }
+  } catch (e) {
+    console.warn("Primary BCV API failed:", e);
+  }
+
+  // Try fallback API
+  try {
+    const res = await fetchWithTimeout("https://bcv-api.rafnixg.dev/rates/");
+    if (res.ok) {
+      const data = await res.json();
+      if (data?.dollar && typeof data.dollar === "number" && data.dollar > 0) {
+        return { rate: data.dollar, offline: false };
+      }
+    }
+  } catch (e) {
+    console.warn("Fallback BCV API failed:", e);
+  }
+
+  return { rate: FALLBACK_RATE, offline: true };
+}
+
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
   const [tasaBCV, setTasaBCV] = useState(0);
@@ -36,15 +82,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   useEffect(() => {
-    fetch("https://bcv-api.rafnixg.dev/rates/")
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.dollar) setTasaBCV(data.dollar);
-        else throw new Error("No dollar rate");
-      })
-      .catch((err) => {
-        console.warn("Error fetching BCV rate, using fallback:", err);
-        setTasaBCV(75);
+    fetchBCVRate()
+      .then(({ rate, offline }) => {
+        setTasaBCV(rate);
+        if (offline) {
+          toast.info("Tasa BCV obtenida offline", {
+            description: `Usando tasa de respaldo: Bs ${rate.toFixed(2)}`,
+          });
+        }
       })
       .finally(() => setTasaLoading(false));
   }, []);
