@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 
 const CheckoutForm = () => {
-  const { isCheckoutOpen, setIsCheckoutOpen, totalUSD, totalBs, tasaBCV, clearCart, items } = useCart();
+  const { isCheckoutOpen, setIsCheckoutOpen, totalUSD, totalBs, tasaBCV, tasaLoading, clearCart, items } = useCart();
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -36,7 +36,7 @@ const CheckoutForm = () => {
             <span>Total</span>
             <span>${totalUSD.toFixed(2)} / Bs {totalBs.toFixed(2)}</span>
           </div>
-          <p className="text-xs text-muted-foreground">Tasa BCV: Bs {tasaBCV.toFixed(2)}</p>
+          <p className="text-xs text-muted-foreground">{tasaLoading ? "Cargando tasa BCV..." : `Tasa BCV: Bs ${tasaBCV.toFixed(2)}`}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4 mt-2">

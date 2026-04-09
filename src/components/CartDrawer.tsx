@@ -4,7 +4,7 @@ import { useCart } from "@/contexts/CartContext";
 import { Minus, Plus, Trash2 } from "lucide-react";
 
 const CartDrawer = () => {
-  const { items, isCartOpen, setIsCartOpen, removeItem, updateQuantity, totalUSD, totalBs, tasaBCV, setIsCheckoutOpen } = useCart();
+  const { items, isCartOpen, setIsCartOpen, removeItem, updateQuantity, totalUSD, totalBs, tasaBCV, tasaLoading, setIsCheckoutOpen } = useCart();
 
   return (
     <Sheet open={isCartOpen} onOpenChange={setIsCartOpen}>
@@ -36,7 +36,7 @@ const CartDrawer = () => {
             </div>
 
             <div className="border-t pt-4 space-y-3">
-              <div className="text-xs text-muted-foreground">Tasa BCV: Bs {tasaBCV.toFixed(2)}</div>
+              <div className="text-xs text-muted-foreground">{tasaLoading ? "Cargando tasa BCV..." : `Tasa BCV: Bs ${tasaBCV.toFixed(2)}`}</div>
               <div className="flex justify-between font-bold text-lg">
                 <span>Total</span>
                 <div className="text-right">
