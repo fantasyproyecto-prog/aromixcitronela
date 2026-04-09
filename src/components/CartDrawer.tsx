@@ -13,6 +13,10 @@ const CartDrawer = () => {
           <SheetTitle className="text-xl font-bold">Tu carrito</SheetTitle>
         </SheetHeader>
 
+        <div className="text-xs text-muted-foreground bg-accent/30 rounded-lg px-3 py-2">
+          {tasaLoading ? "Cargando tasa BCV..." : `Tasa BCV del día: Bs ${tasaBCV.toFixed(2)} / $1 USD`}
+        </div>
+
         {items.length === 0 ? (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">Tu carrito está vacío</div>
         ) : (
@@ -23,7 +27,12 @@ const CartDrawer = () => {
                   <img src={item.image} alt={item.name} className="w-16 h-16 object-contain bg-accent/40 rounded-lg p-1" />
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm truncate text-foreground">{item.name}</p>
-                    <p className="text-sm text-primary font-bold">${item.priceUSD.toFixed(2)}</p>
+                    <p className="text-sm text-primary font-bold">
+                      ${item.priceUSD.toFixed(2)}
+                      <span className="text-muted-foreground font-normal ml-1">
+                        / {tasaLoading ? "..." : `Bs ${(item.priceUSD * tasaBCV).toFixed(2)}`}
+                      </span>
+                    </p>
                     <div className="flex items-center gap-2 mt-1">
                       <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-1 rounded-md hover:bg-muted"><Minus className="h-3 w-3" /></button>
                       <span className="text-sm font-medium w-6 text-center">{item.quantity}</span>
@@ -36,7 +45,6 @@ const CartDrawer = () => {
             </div>
 
             <div className="border-t pt-4 space-y-3">
-              <div className="text-xs text-muted-foreground">{tasaLoading ? "Cargando tasa BCV..." : `Tasa BCV: Bs ${tasaBCV.toFixed(2)}`}</div>
               <div className="flex justify-between font-bold text-lg">
                 <span>Total</span>
                 <div className="text-right">
