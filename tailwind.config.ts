@@ -14,8 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
-        body: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        heading: ['"Berlin Sans"', 'sans-serif'],
+        body: ['sans-serif'],
+        impact: ['"Impact"', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
