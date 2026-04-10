@@ -29,7 +29,7 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-const FALLBACK_RATE = 36.50;
+const FALLBACK_RATE = 475.95;
 
 async function fetchWithTimeout(url: string, timeoutMs = 5000): Promise<Response> {
   const controller = new AbortController();
@@ -43,22 +43,35 @@ async function fetchWithTimeout(url: string, timeoutMs = 5000): Promise<Response
 }
 
 async function fetchBCVRate(): Promise<{ rate: number; offline: boolean }> {
-  // Try primary API
+  // Try primary API: ve.dolarapi.com
+  try {
+    const res = await fetchWithTimeout("https://ve.dolarapi.com/v1/dolares/oficial");
+    if (res.ok) {
+      const data = await res.json();
+      const price = data?.promedio ?? data?.precio;
+      if (price && typeof price === "number" && price > 0) {
+        return { rate: price, offline: false };
+      }
+    }
+  } catch (e) {
+    console.warn("Primary BCV API (dolarapi) failed:", e);
+  }
+
+  // Try second API: pydolarvenezuela
   try {
     const res = await fetchWithTimeout("https://pydolarvenezuela-api.vercel.app/api/v1/dollar?page=bcv");
     if (res.ok) {
       const data = await res.json();
-      // The response structure: { monitors: { usd: { price: number } } } or similar
       const price = data?.monitors?.usd?.price ?? data?.dollar ?? data?.price;
       if (price && typeof price === "number" && price > 0) {
         return { rate: price, offline: false };
       }
     }
   } catch (e) {
-    console.warn("Primary BCV API failed:", e);
+    console.warn("Secondary BCV API (pydolar) failed:", e);
   }
 
-  // Try fallback API
+  // Try third API: bcv-api.rafnixg.dev
   try {
     const res = await fetchWithTimeout("https://bcv-api.rafnixg.dev/rates/");
     if (res.ok) {
@@ -68,7 +81,7 @@ async function fetchBCVRate(): Promise<{ rate: number; offline: boolean }> {
       }
     }
   } catch (e) {
-    console.warn("Fallback BCV API failed:", e);
+    console.warn("Tertiary BCV API (rafnixg) failed:", e);
   }
 
   return { rate: FALLBACK_RATE, offline: true };
