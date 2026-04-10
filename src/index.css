@@ -1,4 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@font-face {
+  font-family: 'Berlin Sans';
+  src: url('/fonts/BRLNSDB.TTF') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Impact';
+  src: url('/fonts/impact.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;
@@ -7,40 +21,40 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 160 10% 15%;
+    --foreground: 0 0% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 160 10% 15%;
+    --card-foreground: 0 0% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 160 10% 15%;
+    --popover-foreground: 0 0% 11%;
 
-    --primary: 82 77% 42%;
+    --primary: 130 50% 40%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 100 20% 95%;
-    --secondary-foreground: 160 10% 15%;
+    --secondary: 120 10% 96%;
+    --secondary-foreground: 0 0% 11%;
 
-    --muted: 100 10% 96%;
-    --muted-foreground: 160 5% 45%;
+    --muted: 120 5% 96%;
+    --muted-foreground: 0 0% 40%;
 
-    --accent: 82 60% 92%;
-    --accent-foreground: 82 77% 25%;
+    --accent: 130 40% 92%;
+    --accent-foreground: 130 50% 25%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 100 10% 90%;
-    --input: 100 10% 90%;
-    --ring: 82 77% 42%;
+    --border: 120 5% 90%;
+    --input: 120 5% 90%;
+    --ring: 130 50% 40%;
 
     --radius: 0.75rem;
 
-    --section-alt: 100 15% 97%;
+    --section-alt: 120 10% 97%;
     --citric: 82 77% 42%;
     --citric-dark: 82 77% 30%;
     --citric-light: 82 60% 92%;
-    --dark: 160 10% 15%;
+    --dark: 0 0% 11%;
     --whatsapp: 142 70% 40%;
 
     --sidebar-background: 0 0% 98%;
@@ -72,6 +86,9 @@
   }
   .section-alt-bg {
     background-color: hsl(var(--section-alt));
+  }
+  .font-impact {
+    font-family: 'Impact', sans-serif;
   }
 }
 
