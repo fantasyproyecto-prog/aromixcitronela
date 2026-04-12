@@ -6,6 +6,7 @@ import Benefits from "@/components/landing/Benefits";
 import Uses from "@/components/landing/Uses";
 import Characteristics from "@/components/landing/Characteristics";
 import Shop from "@/components/landing/Shop";
+import WholesaleProducts from "@/components/landing/WholesaleProducts";
 import Distributors from "@/components/landing/Distributors";
 import DistributorForms from "@/components/landing/DistributorForms";
 import ClosingFooter from "@/components/landing/ClosingFooter";
@@ -23,6 +24,7 @@ const Index = () => (
     <Uses />
     <Characteristics />
     <Shop />
+    <WholesaleProducts />
     <Distributors />
     <DistributorForms />
     <ClosingFooter />
