@@ -42,14 +42,14 @@ const WholesaleProducts = () => {
               <Badge className="absolute top-4 right-4 z-10 bg-amber-500 text-amber-950 hover:bg-amber-500">
                 Venta al Mayor
               </Badge>
-              <div className="bg-accent/40 p-8 flex items-center justify-center h-64">
+              <div className="bg-white p-8 flex items-center justify-center h-64">
                 <img
                   src={p.image}
                   alt={p.name}
                   loading="lazy"
                   width={260}
                   height={260}
-                  className="max-h-52 object-contain drop-shadow-lg"
+                  className="max-h-52 object-contain mix-blend-multiply"
                 />
               </div>
               <div className="p-6 space-y-3">
