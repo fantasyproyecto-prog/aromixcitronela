@@ -7,16 +7,16 @@ import refillImg from "@/assets/lata-real.jpg";
 const products = [
   {
     id: "dispensador",
-    name: "Dispensador Aromix Citronela + Lata",
-    description: "Sistema automático que libera la fragancia en intervalos programados, garantizando protección continua. Incluye una lata de citronela.",
-    priceUSD: 25,
+    name: "Dispensador Aromix Citronela",
+    description: "Sistema automático SA 2000 que libera la fragancia en intervalos programados, garantizando protección continua.",
+    priceUSD: 15.60,
     image: dispensadorImg,
   },
   {
     id: "refill",
-    name: "Lata Refill Citronela",
+    name: "Lata de Citronela Aromix (Refill)",
     description: "Fórmula natural repelente de larga duración compatible con el dispensador Aromix.",
-    priceUSD: 12,
+    priceUSD: 25.50,
     image: refillImg,
   },
 ];
@@ -30,9 +30,9 @@ const Shop = () => {
         <h2 className="font-heading text-3xl md:text-4xl font-bold text-center mb-12">Compra ahora</h2>
         <div className="grid md:grid-cols-2 gap-8">
           {products.map((p) => (
-            <div key={p.id} className="bg-card rounded-2xl border shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="bg-accent/40 p-8 flex items-center justify-center h-64">
-                <img src={p.image} alt={p.name} loading="lazy" width={200} height={200} className="max-h-48 object-contain drop-shadow-lg" />
+            <div key={p.id} className="bg-white rounded-2xl border shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
+              <div className="bg-white p-8 flex items-center justify-center h-64">
+                <img src={p.image} alt={p.name} loading="lazy" width={200} height={200} className="max-h-48 object-contain mix-blend-multiply" />
               </div>
               <div className="p-6 space-y-3">
                 <h3 className="font-heading text-xl font-bold text-foreground">{p.name}</h3>
