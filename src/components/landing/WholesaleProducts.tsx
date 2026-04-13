@@ -37,7 +37,7 @@ const WholesaleProducts = () => {
           {wholesaleProducts.map((p) => (
             <div
               key={p.id}
-              className="relative bg-card rounded-2xl border-2 border-amber-500/60 shadow-sm overflow-hidden hover:shadow-lg transition-shadow"
+              className="relative bg-white rounded-2xl border-2 border-amber-500/60 shadow-sm overflow-hidden hover:shadow-lg transition-shadow"
             >
               <Badge className="absolute top-4 right-4 z-10 bg-amber-500 text-amber-950 hover:bg-amber-500">
                 Venta al Mayor
