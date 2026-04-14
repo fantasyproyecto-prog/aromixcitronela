@@ -3,7 +3,7 @@ import dispensadorImg from "@/assets/dispensador-real.jpg";
 const Solution = () => (
   <section className="section-padding">
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-12 items-center">
-      <div className="flex justify-center bg-white rounded-2xl p-8">
+      <div className="flex justify-center">
         <img src={dispensadorImg} alt="Dispensador Automático SA 2000" loading="lazy" width={400} height={400} className="drop-shadow-2xl max-w-xs md:max-w-sm mix-blend-multiply" />
       </div>
       <div className="space-y-5">
