@@ -9,7 +9,7 @@ const specs = [
 
 const Characteristics = () => (
   <section className="section-padding section-alt-bg">
-    <div className="container mx-auto max-w-5xl">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <h2 className="text-3xl md:text-4xl font-bold text-center mb-12">Rendimiento y eficiencia</h2>
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {specs.map((s) => (

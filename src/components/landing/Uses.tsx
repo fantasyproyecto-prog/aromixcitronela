@@ -10,7 +10,7 @@ const uses = [
 
 const Uses = () => (
   <section className="section-padding">
-    <div className="container mx-auto max-w-4xl text-center">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
       <h2 className="text-3xl md:text-4xl font-bold mb-12">Ideal para:</h2>
       <div className="flex flex-wrap justify-center gap-4 md:gap-6">
         {uses.map((u) => (

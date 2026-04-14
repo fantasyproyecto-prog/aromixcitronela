@@ -3,7 +3,7 @@ import { Handshake } from "lucide-react";
 
 const Distributors = () => (
   <section id="distribuidores" className="section-padding section-alt-bg">
-    <div className="container mx-auto max-w-3xl text-center space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
       <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-primary/10 mb-2">
         <Handshake className="h-7 w-7 text-primary" />
       </div>

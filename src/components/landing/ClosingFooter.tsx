@@ -3,7 +3,7 @@ import { MessageCircle } from "lucide-react";
 
 const ClosingFooter = () => (
   <section className="section-padding bg-foreground text-background">
-    <div className="container mx-auto max-w-3xl text-center space-y-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
       <h2 className="text-3xl md:text-4xl font-bold">Protege tu negocio hoy</h2>
       <p className="text-background/80 text-lg">
         Mejora la experiencia de tus clientes y mantén tu espacio libre de insectos de forma automática.
@@ -20,7 +20,7 @@ const ClosingFooter = () => (
         </Button>
       </div>
     </div>
-    <div className="container mx-auto mt-16 pt-8 border-t border-background/10 text-center text-background/50 text-sm">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 pt-8 border-t border-background/10 text-center text-background/50 text-sm">
       © {new Date().getFullYear()} Aromix Citronela. Todos los derechos reservados.
     </div>
   </section>

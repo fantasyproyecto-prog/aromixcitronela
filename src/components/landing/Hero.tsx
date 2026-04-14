@@ -9,7 +9,7 @@ const Hero = () => (
       <div className="absolute inset-0 bg-foreground/65" />
     </div>
 
-    <div className="relative container mx-auto px-4 py-20 md:py-32">
+    <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 w-full">
       <div className="max-w-2xl space-y-6 animate-fade-in-up">
         <p className="font-impact text-primary-foreground text-lg md:text-xl tracking-wide">
           Menos insectos. Más clientes felices.
