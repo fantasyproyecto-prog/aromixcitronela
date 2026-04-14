@@ -82,7 +82,7 @@
 
 @layer utilities {
   .section-padding {
-    @apply px-4 py-16 md:px-8 md:py-24 lg:px-16;
+    @apply px-4 py-12 md:px-8 md:py-16;
   }
   .section-alt-bg {
     background-color: hsl(var(--section-alt));
