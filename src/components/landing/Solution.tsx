@@ -1,10 +1,18 @@
 import dispensadorImg from "@/assets/dispensador-real.jpg";
 
 const Solution = () => (
-  <section className="section-padding bg-green-50/60">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid md:grid-cols-2 gap-8 md:gap-12 items-center">
-      <div className="flex justify-center bg-transparent">
-        <img src={dispensadorImg} alt="Dispensador Automático SA 2000" loading="lazy" width={400} height={400} className="drop-shadow-2xl max-w-[200px] md:max-w-sm mix-blend-multiply object-contain" />
+  <section className="section-padding bg-lime-50">
+    <div className="max-w-7xl mx-auto grid items-center gap-8 bg-transparent px-4 sm:px-6 md:grid-cols-2 md:gap-12 lg:px-8">
+      <div className="bg-transparent p-0 m-0 border-none shadow-none flex justify-center">
+        <img
+          src={dispensadorImg}
+          alt="Dispensador SA 2000"
+          loading="lazy"
+          width={400}
+          height={400}
+          className="w-full max-w-md h-auto object-contain mix-blend-multiply"
+          style={{ mixBlendMode: 'multiply', backgroundColor: 'transparent' }}
+        />
       </div>
       <div className="space-y-5">
         <span className="text-sm font-semibold text-primary uppercase tracking-wider">La solución</span>
