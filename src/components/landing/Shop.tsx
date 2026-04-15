@@ -27,15 +27,15 @@ const Shop = () => {
   return (
     <section id="tienda" className="section-padding">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="font-heading text-3xl md:text-4xl font-bold text-center mb-12">Compra ahora</h2>
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <h2 className="font-heading text-2xl md:text-4xl font-bold text-center mb-8 md:mb-12">Compra ahora</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
           {products.map((p) => (
             <div key={p.id} className="bg-white rounded-2xl border shadow-sm overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="bg-white p-8 flex items-center justify-center h-64">
-                <img src={p.image} alt={p.name} loading="lazy" width={200} height={200} className="max-h-48 object-contain mix-blend-multiply" />
+              <div className="bg-white p-6 md:p-8 flex items-center justify-center h-52 md:h-64">
+                <img src={p.image} alt={p.name} loading="lazy" width={200} height={200} className="max-h-40 md:max-h-48 object-contain mix-blend-multiply" />
               </div>
-              <div className="p-6 space-y-3">
-                <h3 className="font-heading text-xl font-bold text-foreground">{p.name}</h3>
+              <div className="p-4 md:p-6 space-y-3">
+                <h3 className="font-heading text-lg md:text-xl font-bold text-foreground">{p.name}</h3>
                 <p className="text-muted-foreground text-sm">{p.description}</p>
                 <div className="flex items-baseline gap-2">
                   <span className="font-impact text-2xl text-primary">${p.priceUSD.toFixed(2)}</span>
