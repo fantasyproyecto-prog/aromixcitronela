@@ -44,7 +44,7 @@ const DistributorForms = () => {
       const telefono = String(data.get("e-tel") ?? "");
       const email = String(data.get("e-email") ?? "");
 
-      await emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
+      await emailjs.send("service_o369fbm", "template_ah2kxfd", {
         // Asunto dinámico
         subject: `Nueva Solicitud de Distribución - ${nombre}`,
         asunto: `Nueva Solicitud de Distribución - ${nombre}`,
@@ -63,7 +63,7 @@ const DistributorForms = () => {
 
         // Reply-to para responder directo al cliente
         reply_to: email,
-      }, "YOUR_PUBLIC_KEY");
+      }, "un_PzAS5mmnzH1bxY");
       sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
       toast.success("¡Solicitud enviada con éxito! Nos pondremos en contacto contigo pronto.");
       setSuccess(true);
@@ -98,7 +98,7 @@ const DistributorForms = () => {
       const similar = String(data.get("d-similar") ?? "No especificado");
       const detalle = String(data.get("d-detalle") ?? "Sin detalles adicionales");
 
-      await emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
+      await emailjs.send("service_o369fbm", "template_ah2kxfd", {
         // Asunto dinámico
         subject: `Nueva Solicitud de Distribución - ${empresa}`,
         asunto: `Nueva Solicitud de Distribución - ${empresa}`,
@@ -118,7 +118,7 @@ const DistributorForms = () => {
 
         // Reply-to para responder directo al cliente
         reply_to: email,
-      }, "YOUR_PUBLIC_KEY");
+      }, "un_PzAS5mmnzH1bxY");
       sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
       toast.success("¡Información recibida! Nuestro equipo revisará tu solicitud.");
       setSuccess(true);
