@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,8 +7,9 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { estados, getOfficesByState } from "@/data/mrwOffices";
-import { MapPin, CreditCard, CheckCircle } from "lucide-react";
+import { MapPin, CreditCard, CheckCircle, Paperclip, X } from "lucide-react";
 import emailjs from "@emailjs/browser";
+import { compressImage, dataUrlSizeKB } from "@/lib/compressImage";
 
 const RATE_LIMIT_KEY = "aromix_checkout_last_send";
 const RATE_LIMIT_MS = 5 * 60 * 1000;
@@ -19,14 +20,50 @@ const CheckoutForm = () => {
   const [selectedOffice, setSelectedOffice] = useState("");
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [receiptImage, setReceiptImage] = useState<string | null>(null);
+  const [receiptName, setReceiptName] = useState<string>("");
+  const [compressing, setCompressing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const offices = selectedEstado ? getOfficesByState(selectedEstado) : [];
   const officeDetail = offices.find((o) => o.codigo === selectedOffice);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCompressing(true);
+    try {
+      const dataUrl = await compressImage(file, 600, 0.4);
+      const sizeKB = dataUrlSizeKB(dataUrl);
+      if (sizeKB > 50) {
+        const smaller = await compressImage(file, 480, 0.3);
+        setReceiptImage(smaller);
+      } else {
+        setReceiptImage(dataUrl);
+      }
+      setReceiptName(file.name);
+      toast.success("Comprobante adjuntado correctamente");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo procesar la imagen");
+    } finally {
+      setCompressing(false);
+    }
+  };
+
+  const removeReceipt = () => {
+    setReceiptImage(null);
+    setReceiptName("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!selectedOffice) {
       toast.error("Selecciona una oficina MRW de destino");
+      return;
+    }
+    if (!receiptImage) {
+      toast.error("Adjunta el capture del comprobante de pago");
       return;
     }
 
@@ -61,6 +98,7 @@ const CheckoutForm = () => {
         total_bs: `Bs ${totalBs.toFixed(2)}`,
         referencia_pago: data.get("referencia"),
         agencia_mrw: officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion}` : selectedOffice,
+        adjunto_comprobante: receiptImage,
       }, "YOUR_PUBLIC_KEY");
 
       sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
@@ -80,6 +118,7 @@ const CheckoutForm = () => {
       setSuccess(false);
       setSelectedEstado("");
       setSelectedOffice("");
+      removeReceipt();
     }
   };
 
@@ -175,7 +214,46 @@ const CheckoutForm = () => {
                 <Input id="referencia" name="referencia" placeholder="Ej: 123456" required />
               </div>
 
-              <Button type="submit" disabled={sending} className="w-full bg-primary hover:bg-citric-dark text-primary-foreground font-semibold rounded-full disabled:opacity-50" size="lg">
+              <div className="space-y-2">
+                <Label>Adjuntar capture del comprobante</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                  id="receipt-file"
+                />
+                {!receiptImage ? (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={compressing}
+                    className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 text-primary font-semibold rounded-xl py-4 px-4 transition-colors disabled:opacity-60"
+                  >
+                    <Paperclip className="h-5 w-5" />
+                    {compressing ? "Procesando imagen..." : "Adjuntar Capture"}
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-3 border border-border rounded-xl p-2 bg-accent/30">
+                    <img src={receiptImage} alt="Comprobante" className="h-16 w-16 object-cover rounded-md" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{receiptName}</p>
+                      <p className="text-xs text-muted-foreground">Listo para enviar</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeReceipt}
+                      className="text-muted-foreground hover:text-destructive p-1"
+                      aria-label="Quitar comprobante"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <Button type="submit" disabled={sending || compressing} className="w-full bg-primary hover:bg-citric-dark text-primary-foreground font-semibold rounded-full disabled:opacity-50" size="lg">
                 {sending ? "Procesando..." : "Enviar comprobante y confirmar pedido"}
               </Button>
             </form>
