@@ -7,15 +7,18 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { estados, getOfficesByState } from "@/data/mrwOffices";
-import { MapPin, CreditCard, CheckCircle, Paperclip, X } from "lucide-react";
+import { MapPin, CreditCard, CheckCircle, Paperclip, X, Smartphone, Wallet, ArrowLeft } from "lucide-react";
 import emailjs from "@emailjs/browser";
 import { compressImage, dataUrlSizeKB } from "@/lib/compressImage";
 
 const RATE_LIMIT_KEY = "aromix_checkout_last_send";
 const RATE_LIMIT_MS = 5 * 60 * 1000;
 
+type PaymentMethod = "pago-movil" | null;
+
 const CheckoutForm = () => {
   const { isCheckoutOpen, setIsCheckoutOpen, totalUSD, totalBs, tasaBCV, tasaLoading, clearCart, items } = useCart();
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
   const [selectedEstado, setSelectedEstado] = useState("");
   const [selectedOffice, setSelectedOffice] = useState("");
   const [sending, setSending] = useState(false);
@@ -116,6 +119,7 @@ const CheckoutForm = () => {
     setIsCheckoutOpen(open);
     if (!open) {
       setSuccess(false);
+      setPaymentMethod(null);
       setSelectedEstado("");
       setSelectedOffice("");
       removeReceipt();
