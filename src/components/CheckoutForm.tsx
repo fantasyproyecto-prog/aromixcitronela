@@ -91,7 +91,7 @@ const CheckoutForm = () => {
     const detallePedido = items.map((i) => `${i.name} x${i.quantity} - $${(i.priceUSD * i.quantity).toFixed(2)}`).join("; ");
 
     try {
-      await emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
+      await emailjs.send("service_o369fbm", "template_ah2kxfd", {
         tipo: "Pedido B2C",
         nombre: data.get("c-nombre"),
         telefono: data.get("c-tel"),
@@ -102,7 +102,7 @@ const CheckoutForm = () => {
         referencia_pago: data.get("referencia"),
         agencia_mrw: officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion}` : selectedOffice,
         adjunto_comprobante: receiptImage,
-      }, "YOUR_PUBLIC_KEY");
+      }, "un_PzAS5mmnzH1bxY");
 
       sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
       toast.success("¡Pedido confirmado! Hemos recibido tu comprobante de pago. Te contactaremos pronto.");
