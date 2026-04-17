@@ -62,6 +62,10 @@ const CheckoutForm = () => {
       toast.error("Selecciona una oficina MRW de destino");
       return;
     }
+    if (!receiptImage) {
+      toast.error("Adjunta el capture del comprobante de pago");
+      return;
+    }
 
     const form = e.target as HTMLFormElement;
     const data = new FormData(form);
@@ -94,6 +98,7 @@ const CheckoutForm = () => {
         total_bs: `Bs ${totalBs.toFixed(2)}`,
         referencia_pago: data.get("referencia"),
         agencia_mrw: officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion}` : selectedOffice,
+        adjunto_comprobante: receiptImage,
       }, "YOUR_PUBLIC_KEY");
 
       sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
@@ -113,6 +118,7 @@ const CheckoutForm = () => {
       setSuccess(false);
       setSelectedEstado("");
       setSelectedOffice("");
+      removeReceipt();
     }
   };
 
