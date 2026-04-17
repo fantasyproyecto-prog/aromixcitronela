@@ -44,7 +44,7 @@ const DistributorForms = () => {
       const telefono = String(data.get("e-tel") ?? "");
       const email = String(data.get("e-email") ?? "");
 
-      await emailjs.send("service_o369fbm", "template_ah2kxfd", {
+      await emailjs.send("service_o369fbm", "template_4k8llbl", {
         // Asunto dinámico
         subject: `Nueva Solicitud de Distribución - ${nombre}`,
         asunto: `Nueva Solicitud de Distribución - ${nombre}`,
@@ -98,7 +98,7 @@ const DistributorForms = () => {
       const similar = String(data.get("d-similar") ?? "No especificado");
       const detalle = String(data.get("d-detalle") ?? "Sin detalles adicionales");
 
-      await emailjs.send("service_o369fbm", "template_ah2kxfd", {
+      await emailjs.send("service_o369fbm", "template_4k8llbl", {
         // Asunto dinámico
         subject: `Nueva Solicitud de Distribución - ${empresa}`,
         asunto: `Nueva Solicitud de Distribución - ${empresa}`,
