@@ -7,7 +7,7 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { estados, getOfficesByState } from "@/data/mrwOffices";
-import { MapPin, CreditCard, CheckCircle, Paperclip, X, Smartphone, Wallet, ArrowLeft } from "lucide-react";
+import { MapPin, CreditCard, CheckCircle, Paperclip, X, ArrowLeft } from "lucide-react";
 import emailjs from "@emailjs/browser";
 import { compressImage, dataUrlSizeKB } from "@/lib/compressImage";
 
