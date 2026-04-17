@@ -59,11 +59,12 @@ const WholesaleProducts = () => {
                 <h3 className="font-heading text-lg md:text-xl font-bold text-foreground">{p.name}</h3>
                 <p className="text-muted-foreground text-sm">{p.description}</p>
                 <Button
-                  onClick={handleScrollToForms}
-                  variant="outline"
-                  className="w-full border-amber-500/60 text-amber-700 hover:bg-amber-50 font-semibold rounded-full"
+                  asChild
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold rounded-full"
                 >
-                  <Package className="mr-2 h-4 w-4" /> Solicitar lista de precios
+                  <a href={buildWaUrl(p.waMessage)} target="_blank" rel="noopener noreferrer">
+                    <MessageCircle className="mr-2 h-4 w-4" /> Pedir por WhatsApp
+                  </a>
                 </Button>
               </div>
             </div>
