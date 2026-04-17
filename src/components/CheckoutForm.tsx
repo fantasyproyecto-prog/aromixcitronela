@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,8 +7,9 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { estados, getOfficesByState } from "@/data/mrwOffices";
-import { MapPin, CreditCard, CheckCircle } from "lucide-react";
+import { MapPin, CreditCard, CheckCircle, Paperclip, X } from "lucide-react";
 import emailjs from "@emailjs/browser";
+import { compressImage, dataUrlSizeKB } from "@/lib/compressImage";
 
 const RATE_LIMIT_KEY = "aromix_checkout_last_send";
 const RATE_LIMIT_MS = 5 * 60 * 1000;
@@ -19,9 +20,41 @@ const CheckoutForm = () => {
   const [selectedOffice, setSelectedOffice] = useState("");
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [receiptImage, setReceiptImage] = useState<string | null>(null);
+  const [receiptName, setReceiptName] = useState<string>("");
+  const [compressing, setCompressing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const offices = selectedEstado ? getOfficesByState(selectedEstado) : [];
   const officeDetail = offices.find((o) => o.codigo === selectedOffice);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCompressing(true);
+    try {
+      const dataUrl = await compressImage(file, 600, 0.4);
+      const sizeKB = dataUrlSizeKB(dataUrl);
+      if (sizeKB > 50) {
+        const smaller = await compressImage(file, 480, 0.3);
+        setReceiptImage(smaller);
+      } else {
+        setReceiptImage(dataUrl);
+      }
+      setReceiptName(file.name);
+      toast.success("Comprobante adjuntado correctamente");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo procesar la imagen");
+    } finally {
+      setCompressing(false);
+    }
+  };
+
+  const removeReceipt = () => {
+    setReceiptImage(null);
+    setReceiptName("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
