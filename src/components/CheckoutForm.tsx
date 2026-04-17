@@ -136,10 +136,74 @@ const CheckoutForm = () => {
             <p className="text-muted-foreground">Hemos recibido tu comprobante de pago. Nuestro equipo te contactará pronto para coordinar el envío.</p>
             <Button onClick={() => handleClose(false)} className="bg-primary hover:bg-primary/80 text-primary-foreground rounded-full px-8">Cerrar</Button>
           </div>
+        ) : !paymentMethod ? (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold">Elige tu método de pago</DialogTitle>
+            </DialogHeader>
+            <div className="bg-accent/50 rounded-xl p-4 text-sm space-y-1">
+              <div className="flex justify-between font-bold text-foreground">
+                <span>Total a pagar</span>
+                <span>${totalUSD.toFixed(2)} / Bs {totalBs.toFixed(2)}</span>
+              </div>
+              <p className="text-xs text-muted-foreground">{tasaLoading ? "Cargando tasa BCV..." : `Tasa BCV: Bs ${tasaBCV.toFixed(2)} / $1`}</p>
+            </div>
+
+            <div className="space-y-3 mt-2">
+              {/* Pago Móvil - activo */}
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("pago-movil")}
+                className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-primary/40 hover:border-primary hover:bg-primary/5 transition-colors text-left"
+              >
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <CreditCard className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-foreground">Pago Móvil (Bs)</p>
+                  <p className="text-xs text-muted-foreground">Banesco · Reporta tu pago y adjunta el comprobante</p>
+                </div>
+              </button>
+
+              {/* Tarjeta Stripe - próximamente */}
+              <div className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-border bg-muted/40 opacity-70 cursor-not-allowed">
+                <div className="h-12 w-12 rounded-full bg-background flex items-center justify-center shrink-0">
+                  <CreditCard className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-muted-foreground">Tarjeta internacional (USD)</p>
+                  <p className="text-xs text-muted-foreground">Visa / Mastercard vía Stripe</p>
+                </div>
+                <span className="text-xs font-semibold bg-amber-500/20 text-amber-700 px-2 py-1 rounded-full">Próximamente</span>
+              </div>
+
+              {/* PayPal - próximamente */}
+              <div className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-border bg-muted/40 opacity-70 cursor-not-allowed">
+                <div className="h-12 w-12 rounded-full bg-background flex items-center justify-center shrink-0">
+                  <span className="font-bold text-muted-foreground text-sm">PP</span>
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-muted-foreground">PayPal</p>
+                  <p className="text-xs text-muted-foreground">Pago internacional con cuenta PayPal</p>
+                </div>
+                <span className="text-xs font-semibold bg-amber-500/20 text-amber-700 px-2 py-1 rounded-full">Próximamente</span>
+              </div>
+            </div>
+          </>
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold">Reporte de Pago Móvil</DialogTitle>
+              <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod(null)}
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label="Volver"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+                Reporte de Pago Móvil
+              </DialogTitle>
             </DialogHeader>
 
             <div className="bg-accent/50 rounded-xl p-4 space-y-2 text-sm">
