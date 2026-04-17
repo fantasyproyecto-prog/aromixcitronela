@@ -37,14 +37,32 @@ const DistributorForms = () => {
 
     setSending(true);
     try {
+      const nombre = String(data.get("e-nombre") ?? "");
+      const zona = String(data.get("e-zona") ?? "");
+      const inversion = String(data.get("e-inversion") ?? "");
+      const direccion = String(data.get("e-dir") ?? "");
+      const telefono = String(data.get("e-tel") ?? "");
+      const email = String(data.get("e-email") ?? "");
+
       await emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
-        tipo: "Quiero emprender",
-        nombre: data.get("e-nombre"),
-        telefono: data.get("e-tel"),
-        email: data.get("e-email"),
-        direccion: data.get("e-dir"),
-        zona: data.get("e-zona"),
-        inversion: data.get("e-inversion"),
+        // Asunto dinámico
+        subject: `Nueva Solicitud de Distribución - ${nombre}`,
+        asunto: `Nueva Solicitud de Distribución - ${nombre}`,
+
+        // DATOS DEL SOLICITANTE
+        nombre_razon_social: nombre,
+        ubicacion: zona,
+        telefono_contacto: telefono,
+        email_contacto: email,
+        direccion: direccion,
+
+        // DETALLES DE LA SOLICITUD
+        tipo_interes: "Emprendedor",
+        volumen_estimado: `Inversión estimada: ${inversion} USD`,
+        mensaje_propuesta: `Solicitud de emprendimiento desde la zona ${zona}, con una inversión estimada de ${inversion} USD.`,
+
+        // Reply-to para responder directo al cliente
+        reply_to: email,
       }, "YOUR_PUBLIC_KEY");
       sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
       toast.success("¡Solicitud enviada con éxito! Nos pondremos en contacto contigo pronto.");
@@ -69,18 +87,37 @@ const DistributorForms = () => {
 
     setSending(true);
     try {
+      const nombre = String(data.get("d-nombre") ?? "");
+      const empresa = String(data.get("d-empresa") ?? "");
+      const rif = String(data.get("d-rif") ?? "");
+      const telefono = String(data.get("d-tel") ?? "");
+      const email = String(data.get("d-email") ?? "");
+      const direccion = String(data.get("d-dir") ?? "");
+      const segmento = String(data.get("d-segmento") ?? "");
+      const fuerza = String(data.get("d-fuerza") ?? "");
+      const similar = String(data.get("d-similar") ?? "No especificado");
+      const detalle = String(data.get("d-detalle") ?? "Sin detalles adicionales");
+
       await emailjs.send("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", {
-        tipo: "Empresa distribuidora",
-        nombre: data.get("d-nombre"),
-        empresa: data.get("d-empresa"),
-        rif: data.get("d-rif"),
-        telefono: data.get("d-tel"),
-        email: data.get("d-email"),
-        direccion: data.get("d-dir"),
-        segmento: data.get("d-segmento"),
-        fuerza_ventas: data.get("d-fuerza"),
-        producto_similar: data.get("d-similar"),
-        detalle: data.get("d-detalle"),
+        // Asunto dinámico
+        subject: `Nueva Solicitud de Distribución - ${empresa}`,
+        asunto: `Nueva Solicitud de Distribución - ${empresa}`,
+
+        // DATOS DEL SOLICITANTE
+        nombre_razon_social: `${empresa} (Contacto: ${nombre})`,
+        ubicacion: direccion,
+        telefono_contacto: telefono,
+        email_contacto: email,
+        rif: rif,
+        direccion: direccion,
+
+        // DETALLES DE LA SOLICITUD
+        tipo_interes: "Distribuidor Masivo",
+        volumen_estimado: `Fuerza de ventas: ${fuerza} vendedores · Segmento: ${segmento}`,
+        mensaje_propuesta: `Empresa del segmento ${segmento} con ${fuerza} vendedores. ¿Ha comercializado producto similar?: ${similar}. Detalle: ${detalle}`,
+
+        // Reply-to para responder directo al cliente
+        reply_to: email,
       }, "YOUR_PUBLIC_KEY");
       sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
       toast.success("¡Información recibida! Nuestro equipo revisará tu solicitud.");
