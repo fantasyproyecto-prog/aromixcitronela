@@ -1,7 +1,7 @@
 import { ShoppingCart, Menu, X } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useState } from "react";
-import aromixLogo from "@/assets/aromix-logo.jpg";
+import aromixLogo from "@/assets/aromix-logo.png";
 
 const navLinks = [
   { label: "Inicio", href: "#hero" },
@@ -21,8 +21,7 @@ const Navbar = () => {
           <img
             src={aromixLogo}
             alt="Aromix Citronela"
-            className="h-10 w-auto md:h-12 object-contain mix-blend-multiply bg-transparent"
-            style={{ mixBlendMode: 'multiply', backgroundColor: 'transparent' }}
+            className="h-10 w-auto md:h-12 object-contain"
           />
         </a>
 
