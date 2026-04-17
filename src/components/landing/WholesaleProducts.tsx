@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Package } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import caja12Img from "@/assets/caja-12.jpg";
 import caja72Img from "@/assets/caja-72.jpg";
+
+const WHOLESALE_PHONE = "18136102658";
 
 const wholesaleProducts = [
   {
@@ -10,19 +12,20 @@ const wholesaleProducts = [
     name: "Caja de 12 Unidades",
     description: "Presentación ideal para emprendedores que desean iniciar su negocio con Aromix Citronela.",
     image: caja12Img,
+    waMessage: "Hola, me interesa comprar la caja de 12 unidades de Aromix al mayor.",
   },
   {
     id: "caja-72",
     name: "Caja Master de 72 Unidades",
     description: "Volumen mayorista para distribuidores y empresas con alta demanda de protección contra insectos.",
     image: caja72Img,
+    waMessage: "Hola, me interesa comprar la caja de 72 unidades de Aromix al mayor.",
   },
 ];
 
 const WholesaleProducts = () => {
-  const handleScrollToForms = () => {
-    document.getElementById("formularios")?.scrollIntoView({ behavior: "smooth" });
-  };
+  const buildWaUrl = (msg: string) =>
+    `https://wa.me/${WHOLESALE_PHONE}?text=${encodeURIComponent(msg)}`;
 
   return (
     <section className="section-padding bg-muted/30">
@@ -56,11 +59,12 @@ const WholesaleProducts = () => {
                 <h3 className="font-heading text-lg md:text-xl font-bold text-foreground">{p.name}</h3>
                 <p className="text-muted-foreground text-sm">{p.description}</p>
                 <Button
-                  onClick={handleScrollToForms}
-                  variant="outline"
-                  className="w-full border-amber-500/60 text-amber-700 hover:bg-amber-50 font-semibold rounded-full"
+                  asChild
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold rounded-full"
                 >
-                  <Package className="mr-2 h-4 w-4" /> Solicitar lista de precios
+                  <a href={buildWaUrl(p.waMessage)} target="_blank" rel="noopener noreferrer">
+                    <MessageCircle className="mr-2 h-4 w-4" /> Pedir por WhatsApp
+                  </a>
                 </Button>
               </div>
             </div>
