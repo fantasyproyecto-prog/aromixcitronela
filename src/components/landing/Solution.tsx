@@ -1,4 +1,4 @@
-import dispensadorImg from "@/assets/dispensador-real.jpg";
+import dispensadorImg from "@/assets/dispensador-sa2000.png";
 
 const Solution = () => (
   <section className="section-padding bg-lime-50">
@@ -10,8 +10,7 @@ const Solution = () => (
           loading="lazy"
           width={400}
           height={400}
-          className="w-full max-w-md h-auto object-contain mix-blend-multiply"
-          style={{ mixBlendMode: 'multiply', backgroundColor: 'transparent' }}
+          className="w-full max-w-md mx-auto h-auto object-contain"
         />
       </div>
       <div className="space-y-5">
