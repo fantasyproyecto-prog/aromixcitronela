@@ -1,6 +1,7 @@
 import { ShoppingCart, Menu, X } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
 import { useState } from "react";
+import aromixLogo from "@/assets/aromix-logo.jpg";
 
 const navLinks = [
   { label: "Inicio", href: "#hero" },
@@ -16,8 +17,8 @@ const Navbar = () => {
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b">
       <div className="container mx-auto flex items-center justify-between h-16 px-4">
-        <a href="#hero" className="text-xl font-heading font-bold text-primary">
-          Aromix<span className="text-foreground"> Citronela</span>
+        <a href="#hero" aria-label="Inicio Aromix Citronela" className="flex items-center mix-blend-multiply">
+          <img src={aromixLogo} alt="Aromix Citronela" className="h-10 w-auto md:h-12 object-contain mix-blend-multiply" />
         </a>
 
         <div className="hidden md:flex items-center gap-8">
