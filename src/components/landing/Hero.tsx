@@ -25,7 +25,7 @@ const Hero = () => (
             <a href="#tienda">Comprar ahora</a>
           </Button>
           <Button asChild size="lg" className="w-full sm:w-auto bg-whatsapp hover:bg-whatsapp/90 text-white border-0 font-semibold text-base px-8 rounded-full">
-            <a href="https://wa.me/584121234567" target="_blank" rel="noopener noreferrer">
+            <a href="https://wa.me/18136102658?text=Hola%2C%20estoy%20interesado%20en%20Aromix%20Citronela" target="_blank" rel="noopener noreferrer">
               <MessageCircle className="mr-2 h-5 w-5" /> Escríbenos por WhatsApp
             </a>
           </Button>
