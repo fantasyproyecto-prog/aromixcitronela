@@ -104,9 +104,11 @@ const CheckoutForm = () => {
       const telCliente = String(data.get("c-tel") ?? "");
       const dirCliente = String(data.get("c-dir") ?? "");
       const referencia = String(data.get("referencia") ?? "");
-      const agenciaMrw = officeDetail
-        ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})`
-        : selectedOffice;
+
+      // Consolidar shipping_address según la opción elegida
+      const shipping_address = isOtro
+        ? `Envío por: ${otroEmpresa.trim()} - Estado: ${otroEstado.trim()} - Dirección: ${otroDireccion.trim()}`
+        : `${courier} - ${officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})` : selectedOffice}`;
 
       // 1. Subir comprobante a Storage → URL pública
       const ext = receiptFile.name.split(".").pop()?.toLowerCase() || "jpg";
