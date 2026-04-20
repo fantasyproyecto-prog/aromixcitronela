@@ -309,21 +309,20 @@ const CheckoutForm = () => {
                   className="hidden"
                   id="receipt-file"
                 />
-                {!receiptImage ? (
+                {!receiptPreview ? (
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={compressing}
-                    className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 text-primary font-semibold rounded-xl py-4 px-4 transition-colors disabled:opacity-60"
+                    className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 text-primary font-semibold rounded-xl py-4 px-4 transition-colors"
                   >
                     <Paperclip className="h-5 w-5" />
-                    {compressing ? "Procesando imagen..." : "Adjuntar Capture"}
+                    Adjuntar Capture
                   </button>
                 ) : (
                   <div className="flex items-center gap-3 border border-border rounded-xl p-2 bg-accent/30">
-                    <img src={receiptImage} alt="Comprobante" className="h-16 w-16 object-cover rounded-md" />
+                    <img src={receiptPreview} alt="Comprobante" className="h-16 w-16 object-cover rounded-md" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{receiptName}</p>
+                      <p className="text-sm font-medium text-foreground truncate">{receiptFile?.name}</p>
                       <p className="text-xs text-muted-foreground">Listo para enviar</p>
                     </div>
                     <button
@@ -338,7 +337,7 @@ const CheckoutForm = () => {
                 )}
               </div>
 
-              <Button type="submit" disabled={sending || compressing} className="w-full bg-primary hover:bg-citric-dark text-primary-foreground font-semibold rounded-full disabled:opacity-50" size="lg">
+              <Button type="submit" disabled={sending} className="w-full bg-primary hover:bg-citric-dark text-primary-foreground font-semibold rounded-full disabled:opacity-50" size="lg">
                 {sending ? "Procesando..." : "Enviar comprobante y confirmar pedido"}
               </Button>
             </form>
