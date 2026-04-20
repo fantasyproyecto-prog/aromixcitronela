@@ -7,8 +7,15 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { estados, getOfficesByState } from "@/data/mrwOffices";
+import { getCourierStates, getCourierOffices, type CourierKey } from "@/data/courierOffices";
 import { MapPin, CreditCard, CheckCircle, Paperclip, X, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
+const COURIER_KEY_MAP: Record<string, CourierKey> = {
+  "Liberty Express": "LIBERTY_EXPRESS",
+  "Zoom": "ZOOM",
+  "DHL": "DHL",
+};
 
 const RATE_LIMIT_KEY = "aromix_checkout_last_send";
 const RATE_LIMIT_MS = 5 * 60 * 1000;
@@ -344,24 +351,59 @@ const CheckoutForm = () => {
                   </>
                 )}
 
-                {isOtherKnownCourier && (
-                  <div className="space-y-3 rounded-lg border border-primary/20 bg-accent/30 p-3">
-                    <p className="text-xs text-muted-foreground">
-                      Indica el estado y la sede exacta de <strong>{courier}</strong> donde quieres recibir tu pedido.
-                    </p>
-                    <div>
-                      <Label htmlFor="courier-estado">Estado</Label>
-                      <select id="courier-estado" value={otroEstado} onChange={(e) => setOtroEstado(e.target.value)} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                        <option value="">Selecciona un estado</option>
-                        {estados.map((e) => (<option key={e} value={e}>{e}</option>))}
-                      </select>
+                {isOtherKnownCourier && (() => {
+                  const courierKey = COURIER_KEY_MAP[courier];
+                  const courierStates = getCourierStates(courierKey);
+                  const courierOffices = otroEstado ? getCourierOffices(courierKey, otroEstado) : [];
+                  return (
+                    <div className="space-y-3 rounded-lg border border-primary/20 bg-accent/30 p-3">
+                      <p className="text-xs text-muted-foreground">
+                        Selecciona el estado y la sede de <strong>{courier}</strong> donde quieres recibir tu pedido.
+                      </p>
+                      <div>
+                        <Label htmlFor="courier-estado">Estado</Label>
+                        <select
+                          id="courier-estado"
+                          value={otroEstado}
+                          onChange={(e) => { setOtroEstado(e.target.value); setOtroDireccion(""); }}
+                          required
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                        >
+                          <option value="">Selecciona un estado</option>
+                          {courierStates.map((s) => (<option key={s} value={s}>{s}</option>))}
+                        </select>
+                        {courierStates.length === 0 && (
+                          <p className="text-xs text-destructive mt-1">No hay sedes registradas para {courier}.</p>
+                        )}
+                      </div>
+                      {otroEstado && (
+                        <div>
+                          <Label htmlFor="courier-sede">Sede / Oficina de {courier}</Label>
+                          <select
+                            id="courier-sede"
+                            value={otroDireccion}
+                            onChange={(e) => setOtroDireccion(e.target.value)}
+                            required
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                          >
+                            <option value="">Selecciona una sede</option>
+                            {courierOffices.map((o, idx) => (
+                              <option key={`${o.name}-${idx}`} value={`${o.name} — ${o.address}`}>{o.name}</option>
+                            ))}
+                          </select>
+                          {courierOffices.length === 0 && (
+                            <p className="text-xs text-destructive mt-1">No hay sedes en este estado para {courier}.</p>
+                          )}
+                        </div>
+                      )}
+                      {otroDireccion && (
+                        <div className="bg-background/60 rounded-lg p-2 text-xs text-muted-foreground">
+                          {otroDireccion}
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <Label htmlFor="courier-direccion">Sede / Dirección de {courier}</Label>
-                      <Input id="courier-direccion" value={otroDireccion} onChange={(e) => setOtroDireccion(e.target.value)} required placeholder={`Ej: Sede ${courier} Centro, Av. Principal...`} />
-                    </div>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {isOtro && (
                   <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
