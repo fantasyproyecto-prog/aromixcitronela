@@ -163,8 +163,12 @@ const CheckoutForm = () => {
     if (!open) {
       setSuccess(false);
       setPaymentMethod(null);
+      setCourier("");
       setSelectedEstado("");
       setSelectedOffice("");
+      setOtroEmpresa("");
+      setOtroEstado("");
+      setOtroDireccion("");
       removeReceipt();
     }
   };
