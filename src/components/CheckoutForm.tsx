@@ -7,8 +7,15 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { estados, getOfficesByState } from "@/data/mrwOffices";
+import { COURIER_OFFICES, getCourierStates, getCourierOffices, type CourierKey } from "@/data/courierOffices";
 import { MapPin, CreditCard, CheckCircle, Paperclip, X, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+
+const COURIER_KEY_MAP: Record<string, CourierKey> = {
+  "Liberty Express": "LIBERTY_EXPRESS",
+  "Zoom": "ZOOM",
+  "DHL": "DHL",
+};
 
 const RATE_LIMIT_KEY = "aromix_checkout_last_send";
 const RATE_LIMIT_MS = 5 * 60 * 1000;
