@@ -58,7 +58,7 @@ const CheckoutForm = () => {
       toast.error("Selecciona una oficina MRW de destino");
       return;
     }
-    if (!receiptImage) {
+    if (!receiptFile) {
       toast.error("Adjunta el capture del comprobante de pago");
       return;
     }
@@ -66,13 +66,11 @@ const CheckoutForm = () => {
     const form = e.target as HTMLFormElement;
     const data = new FormData(form);
 
-    // Honeypot check
     if (data.get("website_url")) {
       toast.success("¡Pedido confirmado! Te contactaremos pronto.");
       return;
     }
 
-    // Rate limit check
     const lastSend = sessionStorage.getItem(RATE_LIMIT_KEY);
     if (lastSend && Date.now() - Number(lastSend) < RATE_LIMIT_MS) {
       toast.error("Ya hemos recibido tu solicitud. Por favor espera unos minutos antes de enviar otra.");
@@ -80,8 +78,6 @@ const CheckoutForm = () => {
     }
 
     setSending(true);
-
-    const detallePedido = items.map((i) => `${i.name} x${i.quantity} - $${(i.priceUSD * i.quantity).toFixed(2)}`).join("; ");
 
     try {
       const nombreCliente = String(data.get("c-nombre") ?? "");
@@ -92,29 +88,43 @@ const CheckoutForm = () => {
       const agenciaMrw = officeDetail
         ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})`
         : selectedOffice;
-      const shippingAddress = `${dirCliente} | Oficina MRW: ${agenciaMrw}`;
 
-      await emailjs.send("service_o369fbm", "template_ah2kxfd", {
-        // Asunto
-        subject: `Nueva Orden de Compra - ${nombreCliente}`,
-        // Variables que coinciden con la plantilla template_ah2kxfd
-        user_name: nombreCliente,
-        user_email: emailCliente || "No proporcionado",
-        user_phone: telCliente,
-        items: detallePedido,
-        total_amount: `$${totalUSD.toFixed(2)} (Bs ${totalBs.toFixed(2)})`,
-        shipping_address: shippingAddress,
-        paid_reference: referencia,
-        // Enviamos la imagen como Data URL completo para que EmailJS pueda
-        // renderizarla directamente con <img src="{{payment_screenshot}}">
-        payment_screenshot: receiptImage,
-      }, "un_PzAS5mmnzH1bxY");
+      // 1. Subir comprobante a Storage → URL pública
+      const ext = receiptFile.name.split(".").pop()?.toLowerCase() || "jpg";
+      const filePath = `${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("payment-receipts")
+        .upload(filePath, receiptFile, { contentType: receiptFile.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("payment-receipts").getPublicUrl(filePath);
+      const receiptUrl = pub.publicUrl;
+
+      // 2. Enviar correo vía Resend (Edge Function)
+      const { error: fnErr } = await supabase.functions.invoke("send-aromix-email", {
+        body: {
+          type: "checkout",
+          replyTo: emailCliente || undefined,
+          data: {
+            name: nombreCliente,
+            email: emailCliente || "No proporcionado",
+            phone: telCliente,
+            address: dirCliente,
+            shipping: agenciaMrw,
+            reference: referencia,
+            items: items.map((i) => ({ name: i.name, qty: i.quantity, price: i.priceUSD })),
+            total: `$${totalUSD.toFixed(2)} / Bs ${totalBs.toFixed(2)}`,
+            receiptUrl,
+          },
+        },
+      });
+      if (fnErr) throw fnErr;
 
       sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
       toast.success("¡Pedido confirmado! Hemos recibido tu comprobante de pago. Te contactaremos pronto.");
       clearCart();
       setSuccess(true);
-    } catch {
+    } catch (err) {
+      console.error("Checkout error:", err);
       toast.error("Error al enviar el pedido. Intenta de nuevo.");
     } finally {
       setSending(false);
