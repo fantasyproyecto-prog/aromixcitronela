@@ -33,7 +33,8 @@ const CheckoutForm = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOtro = courier === "Otro";
-  const isKnownCourier = courier !== "" && !isOtro;
+  const isMRW = courier === "MRW";
+  const isOtherKnownCourier = courier !== "" && !isOtro && !isMRW; // Liberty, Zoom, DHL
   const offices = selectedEstado ? getOfficesByState(selectedEstado) : [];
   const officeDetail = offices.find((o) => o.codigo === selectedOffice);
 
