@@ -104,6 +104,7 @@ const CheckoutForm = () => {
         body: {
           type: "checkout",
           replyTo: emailCliente || undefined,
+          receiptPath: filePath,
           data: {
             name: nombreCliente,
             email: emailCliente || "No proporcionado",
