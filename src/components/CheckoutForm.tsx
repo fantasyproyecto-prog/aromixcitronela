@@ -14,18 +14,26 @@ const RATE_LIMIT_KEY = "aromix_checkout_last_send";
 const RATE_LIMIT_MS = 5 * 60 * 1000;
 
 type PaymentMethod = "pago-movil" | null;
+type Courier = "MRW" | "Liberty Express" | "Zoom" | "DHL" | "Otro" | "";
+const COURIERS: Exclude<Courier, "">[] = ["MRW", "Liberty Express", "Zoom", "DHL", "Otro"];
 
 const CheckoutForm = () => {
   const { isCheckoutOpen, setIsCheckoutOpen, totalUSD, totalBs, tasaBCV, tasaLoading, clearCart, items } = useCart();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
+  const [courier, setCourier] = useState<Courier>("");
   const [selectedEstado, setSelectedEstado] = useState("");
   const [selectedOffice, setSelectedOffice] = useState("");
+  const [otroEmpresa, setOtroEmpresa] = useState("");
+  const [otroEstado, setOtroEstado] = useState("");
+  const [otroDireccion, setOtroDireccion] = useState("");
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const isOtro = courier === "Otro";
+  const isKnownCourier = courier !== "" && !isOtro;
   const offices = selectedEstado ? getOfficesByState(selectedEstado) : [];
   const officeDetail = offices.find((o) => o.codigo === selectedOffice);
 
@@ -54,9 +62,20 @@ const CheckoutForm = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!selectedOffice) {
-      toast.error("Selecciona una oficina MRW de destino");
+    if (!courier) {
+      toast.error("Selecciona la empresa de envío (courier)");
       return;
+    }
+    if (isOtro) {
+      if (!otroEmpresa.trim() || !otroEstado.trim() || !otroDireccion.trim()) {
+        toast.error("Completa los campos de la empresa de envío personalizada");
+        return;
+      }
+    } else {
+      if (!selectedOffice) {
+        toast.error(`Selecciona la sede de ${courier} de destino`);
+        return;
+      }
     }
     if (!receiptFile) {
       toast.error("Adjunta el capture del comprobante de pago");
@@ -85,9 +104,11 @@ const CheckoutForm = () => {
       const telCliente = String(data.get("c-tel") ?? "");
       const dirCliente = String(data.get("c-dir") ?? "");
       const referencia = String(data.get("referencia") ?? "");
-      const agenciaMrw = officeDetail
-        ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})`
-        : selectedOffice;
+
+      // Consolidar shipping_address según la opción elegida
+      const shipping_address = isOtro
+        ? `Envío por: ${otroEmpresa.trim()} - Estado: ${otroEstado.trim()} - Dirección: ${otroDireccion.trim()}`
+        : `${courier} - ${officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})` : selectedOffice}`;
 
       // 1. Subir comprobante a Storage → URL pública
       const ext = receiptFile.name.split(".").pop()?.toLowerCase() || "jpg";
@@ -110,7 +131,12 @@ const CheckoutForm = () => {
             email: emailCliente || "No proporcionado",
             phone: telCliente,
             address: dirCliente,
-            shipping: agenciaMrw,
+            shipping: shipping_address,
+            shippingCourier: courier,
+            shippingIsOther: isOtro,
+            shippingOther: isOtro
+              ? { company: otroEmpresa.trim(), state: otroEstado.trim(), address: otroDireccion.trim() }
+              : undefined,
             reference: referencia,
             items: items.map((i) => ({ name: i.name, qty: i.quantity, price: i.priceUSD })),
             total: `$${totalUSD.toFixed(2)} / Bs ${totalBs.toFixed(2)}`,
@@ -137,8 +163,12 @@ const CheckoutForm = () => {
     if (!open) {
       setSuccess(false);
       setPaymentMethod(null);
+      setCourier("");
       setSelectedEstado("");
       setSelectedOffice("");
+      setOtroEmpresa("");
+      setOtroEstado("");
+      setOtroDireccion("");
       removeReceipt();
     }
   };
@@ -252,29 +282,79 @@ const CheckoutForm = () => {
               <Separator />
               <div className="space-y-3">
                 <p className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-primary" /> Oficina MRW de destino
+                  <MapPin className="h-4 w-4 text-primary" /> Empresa de envío (Courier)
                 </p>
                 <div>
-                  <Label htmlFor="mrw-estado">Estado</Label>
-                  <select id="mrw-estado" value={selectedEstado} onChange={(e) => { setSelectedEstado(e.target.value); setSelectedOffice(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                    <option value="">Selecciona un estado</option>
-                    {estados.map((e) => (<option key={e} value={e}>{e}</option>))}
+                  <Label htmlFor="courier">Selecciona el courier</Label>
+                  <select
+                    id="courier"
+                    value={courier}
+                    onChange={(e) => {
+                      setCourier(e.target.value as Courier);
+                      setSelectedEstado("");
+                      setSelectedOffice("");
+                      setOtroEmpresa("");
+                      setOtroEstado("");
+                      setOtroDireccion("");
+                    }}
+                    required
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                  >
+                    <option value="">Selecciona una empresa</option>
+                    {COURIERS.map((c) => (
+                      <option key={c} value={c}>{c === "Otro" ? "Otro (Especificar)" : c}</option>
+                    ))}
                   </select>
                 </div>
-                {selectedEstado && (
-                  <div>
-                    <Label htmlFor="mrw-oficina">Oficina MRW</Label>
-                    <select id="mrw-oficina" value={selectedOffice} onChange={(e) => setSelectedOffice(e.target.value)} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                      <option value="">Selecciona una oficina</option>
-                      {offices.map((o) => (<option key={o.codigo} value={o.codigo}>{o.nombre}</option>))}
-                    </select>
-                  </div>
+
+                {isKnownCourier && (
+                  <>
+                    <div>
+                      <Label htmlFor="mrw-estado">Estado</Label>
+                      <select id="mrw-estado" value={selectedEstado} onChange={(e) => { setSelectedEstado(e.target.value); setSelectedOffice(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                        <option value="">Selecciona un estado</option>
+                        {estados.map((e) => (<option key={e} value={e}>{e}</option>))}
+                      </select>
+                    </div>
+                    {selectedEstado && (
+                      <div>
+                        <Label htmlFor="mrw-oficina">Sede / Oficina de {courier}</Label>
+                        <select id="mrw-oficina" value={selectedOffice} onChange={(e) => setSelectedOffice(e.target.value)} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                          <option value="">Selecciona una sede</option>
+                          {offices.map((o) => (<option key={o.codigo} value={o.codigo}>{o.nombre}</option>))}
+                        </select>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Mostramos sedes de referencia. El despacho se realizará por <strong>{courier}</strong> a la sede indicada.
+                        </p>
+                      </div>
+                    )}
+                    {officeDetail && (
+                      <div className="bg-accent/40 rounded-lg p-3 text-xs text-muted-foreground space-y-1">
+                        <p className="font-semibold text-foreground">{officeDetail.nombre}</p>
+                        <p>{officeDetail.direccion}</p>
+                        <p>Tel: {officeDetail.telefono}</p>
+                      </div>
+                    )}
+                  </>
                 )}
-                {officeDetail && (
-                  <div className="bg-accent/40 rounded-lg p-3 text-xs text-muted-foreground space-y-1">
-                    <p className="font-semibold text-foreground">{officeDetail.nombre}</p>
-                    <p>{officeDetail.direccion}</p>
-                    <p>Tel: {officeDetail.telefono}</p>
+
+                {isOtro && (
+                  <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                    <p className="text-xs text-muted-foreground">
+                      Indícanos los datos de la empresa de envío que prefieres. El equipo de despacho prestará especial atención a esta guía.
+                    </p>
+                    <div>
+                      <Label htmlFor="otro-empresa">Nombre de la empresa de envío</Label>
+                      <Input id="otro-empresa" value={otroEmpresa} onChange={(e) => setOtroEmpresa(e.target.value)} required placeholder="Ej: Tealca, Domesa, etc." />
+                    </div>
+                    <div>
+                      <Label htmlFor="otro-estado">Estado</Label>
+                      <Input id="otro-estado" value={otroEstado} onChange={(e) => setOtroEstado(e.target.value)} required placeholder="Ej: Carabobo" />
+                    </div>
+                    <div>
+                      <Label htmlFor="otro-direccion">Sede / Dirección de destino</Label>
+                      <Input id="otro-direccion" value={otroDireccion} onChange={(e) => setOtroDireccion(e.target.value)} required placeholder="Sede u oficina exacta de entrega" />
+                    </div>
                   </div>
                 )}
               </div>
