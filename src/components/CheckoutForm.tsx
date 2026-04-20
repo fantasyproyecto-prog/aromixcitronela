@@ -7,7 +7,7 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { estados, getOfficesByState } from "@/data/mrwOffices";
-import { COURIER_OFFICES, getCourierStates, getCourierOffices, type CourierKey } from "@/data/courierOffices";
+import { getCourierStates, getCourierOffices, type CourierKey } from "@/data/courierOffices";
 import { MapPin, CreditCard, CheckCircle, Paperclip, X, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
