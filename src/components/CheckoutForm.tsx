@@ -92,6 +92,7 @@ const CheckoutForm = () => {
 
     try {
       const nombreCliente = String(data.get("c-nombre") ?? "");
+      const emailCliente = String(data.get("c-email") ?? "").trim();
       const telCliente = String(data.get("c-tel") ?? "");
       const dirCliente = String(data.get("c-dir") ?? "");
       const referencia = String(data.get("referencia") ?? "");
@@ -105,12 +106,14 @@ const CheckoutForm = () => {
         subject: `Nueva Orden de Compra - ${nombreCliente}`,
         // Variables que coinciden con la plantilla template_ah2kxfd
         user_name: nombreCliente,
-        user_email: "No proporcionado",
+        user_email: emailCliente || "No proporcionado",
         user_phone: telCliente,
         items: detallePedido,
         total_amount: `$${totalUSD.toFixed(2)} (Bs ${totalBs.toFixed(2)})`,
         shipping_address: shippingAddress,
         paid_reference: referencia,
+        // Enviamos la imagen como Data URL completo para que EmailJS pueda
+        // renderizarla directamente con <img src="{{payment_screenshot}}">
         payment_screenshot: receiptImage,
       }, "un_PzAS5mmnzH1bxY");
 
@@ -238,6 +241,7 @@ const CheckoutForm = () => {
 
               <p className="text-sm font-semibold text-foreground">Datos de envío</p>
               <div><Label htmlFor="c-nombre">Nombre completo</Label><Input id="c-nombre" name="c-nombre" required /></div>
+              <div><Label htmlFor="c-email">Correo electrónico</Label><Input id="c-email" name="c-email" type="email" required placeholder="tu@correo.com" /></div>
               <div><Label htmlFor="c-tel">Teléfono de contacto</Label><Input id="c-tel" name="c-tel" type="tel" required /></div>
               <div><Label htmlFor="c-dir">Dirección de envío</Label><Input id="c-dir" name="c-dir" required /></div>
 
