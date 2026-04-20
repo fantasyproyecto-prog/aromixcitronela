@@ -8,8 +8,7 @@ import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { estados, getOfficesByState } from "@/data/mrwOffices";
 import { MapPin, CreditCard, CheckCircle, Paperclip, X, ArrowLeft } from "lucide-react";
-import emailjs from "@emailjs/browser";
-import { compressImage, dataUrlSizeKB } from "@/lib/compressImage";
+import { supabase } from "@/integrations/supabase/client";
 
 const RATE_LIMIT_KEY = "aromix_checkout_last_send";
 const RATE_LIMIT_MS = 5 * 60 * 1000;
@@ -23,39 +22,33 @@ const CheckoutForm = () => {
   const [selectedOffice, setSelectedOffice] = useState("");
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [receiptImage, setReceiptImage] = useState<string | null>(null);
-  const [receiptName, setReceiptName] = useState<string>("");
-  const [compressing, setCompressing] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const offices = selectedEstado ? getOfficesByState(selectedEstado) : [];
   const officeDetail = offices.find((o) => o.codigo === selectedOffice);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setCompressing(true);
-    try {
-      const dataUrl = await compressImage(file, 600, 0.4);
-      const sizeKB = dataUrlSizeKB(dataUrl);
-      if (sizeKB > 50) {
-        const smaller = await compressImage(file, 480, 0.3);
-        setReceiptImage(smaller);
-      } else {
-        setReceiptImage(dataUrl);
-      }
-      setReceiptName(file.name);
-      toast.success("Comprobante adjuntado correctamente");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo procesar la imagen");
-    } finally {
-      setCompressing(false);
+    if (!file.type.startsWith("image/")) {
+      toast.error("El archivo debe ser una imagen");
+      return;
     }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("La imagen no puede superar los 5MB");
+      return;
+    }
+    setReceiptFile(file);
+    setReceiptPreview(URL.createObjectURL(file));
+    toast.success("Comprobante adjuntado correctamente");
   };
 
   const removeReceipt = () => {
-    setReceiptImage(null);
-    setReceiptName("");
+    setReceiptFile(null);
+    if (receiptPreview) URL.revokeObjectURL(receiptPreview);
+    setReceiptPreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
@@ -65,7 +58,7 @@ const CheckoutForm = () => {
       toast.error("Selecciona una oficina MRW de destino");
       return;
     }
-    if (!receiptImage) {
+    if (!receiptFile) {
       toast.error("Adjunta el capture del comprobante de pago");
       return;
     }
@@ -73,13 +66,11 @@ const CheckoutForm = () => {
     const form = e.target as HTMLFormElement;
     const data = new FormData(form);
 
-    // Honeypot check
     if (data.get("website_url")) {
       toast.success("¡Pedido confirmado! Te contactaremos pronto.");
       return;
     }
 
-    // Rate limit check
     const lastSend = sessionStorage.getItem(RATE_LIMIT_KEY);
     if (lastSend && Date.now() - Number(lastSend) < RATE_LIMIT_MS) {
       toast.error("Ya hemos recibido tu solicitud. Por favor espera unos minutos antes de enviar otra.");
@@ -87,8 +78,6 @@ const CheckoutForm = () => {
     }
 
     setSending(true);
-
-    const detallePedido = items.map((i) => `${i.name} x${i.quantity} - $${(i.priceUSD * i.quantity).toFixed(2)}`).join("; ");
 
     try {
       const nombreCliente = String(data.get("c-nombre") ?? "");
@@ -99,29 +88,43 @@ const CheckoutForm = () => {
       const agenciaMrw = officeDetail
         ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})`
         : selectedOffice;
-      const shippingAddress = `${dirCliente} | Oficina MRW: ${agenciaMrw}`;
 
-      await emailjs.send("service_o369fbm", "template_ah2kxfd", {
-        // Asunto
-        subject: `Nueva Orden de Compra - ${nombreCliente}`,
-        // Variables que coinciden con la plantilla template_ah2kxfd
-        user_name: nombreCliente,
-        user_email: emailCliente || "No proporcionado",
-        user_phone: telCliente,
-        items: detallePedido,
-        total_amount: `$${totalUSD.toFixed(2)} (Bs ${totalBs.toFixed(2)})`,
-        shipping_address: shippingAddress,
-        paid_reference: referencia,
-        // Enviamos la imagen como Data URL completo para que EmailJS pueda
-        // renderizarla directamente con <img src="{{payment_screenshot}}">
-        payment_screenshot: receiptImage,
-      }, "un_PzAS5mmnzH1bxY");
+      // 1. Subir comprobante a Storage → URL pública
+      const ext = receiptFile.name.split(".").pop()?.toLowerCase() || "jpg";
+      const filePath = `${crypto.randomUUID()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("payment-receipts")
+        .upload(filePath, receiptFile, { contentType: receiptFile.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("payment-receipts").getPublicUrl(filePath);
+      const receiptUrl = pub.publicUrl;
+
+      // 2. Enviar correo vía Resend (Edge Function)
+      const { error: fnErr } = await supabase.functions.invoke("send-aromix-email", {
+        body: {
+          type: "checkout",
+          replyTo: emailCliente || undefined,
+          data: {
+            name: nombreCliente,
+            email: emailCliente || "No proporcionado",
+            phone: telCliente,
+            address: dirCliente,
+            shipping: agenciaMrw,
+            reference: referencia,
+            items: items.map((i) => ({ name: i.name, qty: i.quantity, price: i.priceUSD })),
+            total: `$${totalUSD.toFixed(2)} / Bs ${totalBs.toFixed(2)}`,
+            receiptUrl,
+          },
+        },
+      });
+      if (fnErr) throw fnErr;
 
       sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
       toast.success("¡Pedido confirmado! Hemos recibido tu comprobante de pago. Te contactaremos pronto.");
       clearCart();
       setSuccess(true);
-    } catch {
+    } catch (err) {
+      console.error("Checkout error:", err);
       toast.error("Error al enviar el pedido. Intenta de nuevo.");
     } finally {
       setSending(false);
@@ -306,21 +309,20 @@ const CheckoutForm = () => {
                   className="hidden"
                   id="receipt-file"
                 />
-                {!receiptImage ? (
+                {!receiptPreview ? (
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={compressing}
-                    className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 text-primary font-semibold rounded-xl py-4 px-4 transition-colors disabled:opacity-60"
+                    className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-primary/40 hover:border-primary hover:bg-primary/5 text-primary font-semibold rounded-xl py-4 px-4 transition-colors"
                   >
                     <Paperclip className="h-5 w-5" />
-                    {compressing ? "Procesando imagen..." : "Adjuntar Capture"}
+                    Adjuntar Capture
                   </button>
                 ) : (
                   <div className="flex items-center gap-3 border border-border rounded-xl p-2 bg-accent/30">
-                    <img src={receiptImage} alt="Comprobante" className="h-16 w-16 object-cover rounded-md" />
+                    <img src={receiptPreview} alt="Comprobante" className="h-16 w-16 object-cover rounded-md" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{receiptName}</p>
+                      <p className="text-sm font-medium text-foreground truncate">{receiptFile?.name}</p>
                       <p className="text-xs text-muted-foreground">Listo para enviar</p>
                     </div>
                     <button
@@ -335,7 +337,7 @@ const CheckoutForm = () => {
                 )}
               </div>
 
-              <Button type="submit" disabled={sending || compressing} className="w-full bg-primary hover:bg-citric-dark text-primary-foreground font-semibold rounded-full disabled:opacity-50" size="lg">
+              <Button type="submit" disabled={sending} className="w-full bg-primary hover:bg-citric-dark text-primary-foreground font-semibold rounded-full disabled:opacity-50" size="lg">
                 {sending ? "Procesando..." : "Enviar comprobante y confirmar pedido"}
               </Button>
             </form>
