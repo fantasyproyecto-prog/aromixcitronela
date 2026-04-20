@@ -62,9 +62,20 @@ const CheckoutForm = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!selectedOffice) {
-      toast.error("Selecciona una oficina MRW de destino");
+    if (!courier) {
+      toast.error("Selecciona la empresa de envío (courier)");
       return;
+    }
+    if (isOtro) {
+      if (!otroEmpresa.trim() || !otroEstado.trim() || !otroDireccion.trim()) {
+        toast.error("Completa los campos de la empresa de envío personalizada");
+        return;
+      }
+    } else {
+      if (!selectedOffice) {
+        toast.error(`Selecciona la sede de ${courier} de destino`);
+        return;
+      }
     }
     if (!receiptFile) {
       toast.error("Adjunta el capture del comprobante de pago");
