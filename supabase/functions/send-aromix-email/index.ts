@@ -50,6 +50,16 @@ function buildHtml(type: string, data: Record<string, any>): { subject: string; 
     const receipt = data.receiptUrl
       ? `<div style="margin-top:24px;"><div style="color:#6b7758;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Comprobante de Pago Móvil</div><a href="${e("receiptUrl")}" target="_blank"><img src="${e("receiptUrl")}" alt="Comprobante" style="max-width:100%;border-radius:8px;border:1px solid #e5e9dd;"/></a><p style="margin:8px 0 0;font-size:12px;"><a href="${e("receiptUrl")}" style="color:${BRAND_GREEN};">Abrir imagen original</a></p></div>`
       : "";
+    const isOther = data.shippingIsOther === true;
+    const shippingLabel = isOther ? "⚠️ Envío personalizado (Otro)" : `Envío por ${escapeHtml(data.shippingCourier ?? "Courier")}`;
+    const shippingValueHtml = isOther
+      ? `<strong style="color:${BRAND_DARK};font-size:16px;">Envío por: ${escapeHtml(data.shippingOther?.company ?? "")} - Estado: ${escapeHtml(data.shippingOther?.state ?? "")} - Dirección: ${escapeHtml(data.shippingOther?.address ?? "")}</strong><div style="margin-top:6px;color:#b45309;font-size:12px;font-weight:600;">⚠️ Atención despacho: guía de envío personalizada indicada por el cliente.</div>`
+      : escapeHtml(data.shipping ?? "");
+    const shippingRow = `
+      <tr><td style="padding:12px 0;border-bottom:1px solid #eef1e6;${isOther ? `background:#fffbeb;border-left:4px solid #f59e0b;padding-left:12px;` : ""}">
+        <div style="color:#6b7758;font-size:12px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">${shippingLabel}</div>
+        <div style="color:#2d3a1a;font-size:15px;font-weight:500;">${shippingValueHtml || "—"}</div>
+      </td></tr>`;
     const body = `
       <h2 style="margin:0 0 8px;color:${BRAND_DARK};font-size:22px;">Nuevo pedido recibido</h2>
       <p style="margin:0 0 24px;color:#6b7758;font-size:14px;">Un cliente acaba de completar una compra en la tienda.</p>
@@ -58,7 +68,7 @@ function buildHtml(type: string, data: Record<string, any>): { subject: string; 
         ${row("Email", e("email"))}
         ${row("Teléfono", e("phone"))}
         ${row("Dirección", e("address"))}
-        ${row("Envío (MRW/Domesa)", e("shipping"))}
+        ${shippingRow}
         ${row("Referencia Pago Móvil", e("reference"))}
       </table>
       <h3 style="margin:32px 0 12px;color:${BRAND_DARK};font-size:16px;">Detalle del pedido</h3>
@@ -67,7 +77,7 @@ function buildHtml(type: string, data: Record<string, any>): { subject: string; 
         <tr><td style="padding:16px 0 4px;color:${BRAND_DARK};font-size:16px;font-weight:700;">TOTAL</td><td align="right" style="padding:16px 0 4px;color:${BRAND_GREEN};font-size:20px;font-weight:700;">${e("total")}</td></tr>
       </table>
       ${receipt}`;
-    return { subject: `🛒 Nuevo pedido — ${data.name}`, html: layout("Nuevo Pedido", body) };
+    return { subject: `🛒 Nuevo pedido — ${data.name}${isOther ? " (Envío Otro ⚠️)" : ""}`, html: layout("Nuevo Pedido", body) };
   }
 
   if (type === "emprendedor") {
