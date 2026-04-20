@@ -115,7 +115,9 @@ const CheckoutForm = () => {
       // Consolidar shipping_address según la opción elegida
       const shipping_address = isOtro
         ? `Envío por: ${otroEmpresa.trim()} - Estado: ${otroEstado.trim()} - Dirección: ${otroDireccion.trim()}`
-        : `${courier} - ${officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})` : selectedOffice}`;
+        : isMRW
+          ? `MRW - ${officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})` : selectedOffice}`
+          : `${courier} - Estado: ${otroEstado.trim()} - Sede: ${otroDireccion.trim()}`;
 
       // 1. Subir comprobante a Storage → URL pública
       const ext = receiptFile.name.split(".").pop()?.toLowerCase() || "jpg";
