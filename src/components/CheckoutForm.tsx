@@ -131,7 +131,12 @@ const CheckoutForm = () => {
             email: emailCliente || "No proporcionado",
             phone: telCliente,
             address: dirCliente,
-            shipping: agenciaMrw,
+            shipping: shipping_address,
+            shippingCourier: courier,
+            shippingIsOther: isOtro,
+            shippingOther: isOtro
+              ? { company: otroEmpresa.trim(), state: otroEstado.trim(), address: otroDireccion.trim() }
+              : undefined,
             reference: referencia,
             items: items.map((i) => ({ name: i.name, qty: i.quantity, price: i.priceUSD })),
             total: `$${totalUSD.toFixed(2)} / Bs ${totalBs.toFixed(2)}`,
