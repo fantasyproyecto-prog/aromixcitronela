@@ -72,9 +72,15 @@ const CheckoutForm = () => {
         toast.error("Completa los campos de la empresa de envío personalizada");
         return;
       }
-    } else {
+    } else if (isMRW) {
       if (!selectedOffice) {
-        toast.error(`Selecciona la sede de ${courier} de destino`);
+        toast.error("Selecciona la sede de MRW de destino");
+        return;
+      }
+    } else {
+      // Liberty Express, Zoom, DHL
+      if (!otroEstado.trim() || !otroDireccion.trim()) {
+        toast.error(`Indica el estado y la sede de ${courier}`);
         return;
       }
     }
