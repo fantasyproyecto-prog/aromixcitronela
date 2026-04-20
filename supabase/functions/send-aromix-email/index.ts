@@ -53,7 +53,7 @@ function buildHtml(type: string, data: Record<string, any>): { subject: string; 
     const isOther = data.shippingIsOther === true;
     const shippingLabel = isOther ? "⚠️ Envío personalizado (Otro)" : `Envío por ${escapeHtml(data.shippingCourier ?? "Courier")}`;
     const shippingValueHtml = isOther
-      ? `<strong style="color:${BRAND_DARK};font-size:16px;">Envío por: ${escapeHtml(data.shippingOther?.company ?? "")} - Estado: ${escapeHtml(data.shippingOther?.state ?? "")} - Dirección: ${escapeHtml(data.shippingOther?.address ?? "")}</strong><div style="margin-top:6px;color:#b45309;font-size:12px;font-weight:600;">⚠️ Atención despacho: guía de envío personalizada indicada por el cliente.</div>`
+      ? `<strong style="color:${BRAND_DARK};font-size:16px;">Envío por: ${escapeHtml(data.shippingOther?.company ?? "")} - Estado: ${escapeHtml(data.shippingOther?.state ?? "")} - Dirección: ${escapeHtml(data.shippingOther?.address ?? "")}</strong>`
       : escapeHtml(data.shipping ?? "");
     const shippingRow = `
       <tr><td style="padding:12px 0;border-bottom:1px solid #eef1e6;${isOther ? `background:#fffbeb;border-left:4px solid #f59e0b;padding-left:12px;` : ""}">
