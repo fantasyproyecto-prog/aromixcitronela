@@ -8,8 +8,7 @@ import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { estados, getOfficesByState } from "@/data/mrwOffices";
 import { MapPin, CreditCard, CheckCircle, Paperclip, X, ArrowLeft } from "lucide-react";
-import emailjs from "@emailjs/browser";
-import { compressImage, dataUrlSizeKB } from "@/lib/compressImage";
+import { supabase } from "@/integrations/supabase/client";
 
 const RATE_LIMIT_KEY = "aromix_checkout_last_send";
 const RATE_LIMIT_MS = 5 * 60 * 1000;
@@ -23,39 +22,33 @@ const CheckoutForm = () => {
   const [selectedOffice, setSelectedOffice] = useState("");
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [receiptImage, setReceiptImage] = useState<string | null>(null);
-  const [receiptName, setReceiptName] = useState<string>("");
-  const [compressing, setCompressing] = useState(false);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const offices = selectedEstado ? getOfficesByState(selectedEstado) : [];
   const officeDetail = offices.find((o) => o.codigo === selectedOffice);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setCompressing(true);
-    try {
-      const dataUrl = await compressImage(file, 600, 0.4);
-      const sizeKB = dataUrlSizeKB(dataUrl);
-      if (sizeKB > 50) {
-        const smaller = await compressImage(file, 480, 0.3);
-        setReceiptImage(smaller);
-      } else {
-        setReceiptImage(dataUrl);
-      }
-      setReceiptName(file.name);
-      toast.success("Comprobante adjuntado correctamente");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "No se pudo procesar la imagen");
-    } finally {
-      setCompressing(false);
+    if (!file.type.startsWith("image/")) {
+      toast.error("El archivo debe ser una imagen");
+      return;
     }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("La imagen no puede superar los 5MB");
+      return;
+    }
+    setReceiptFile(file);
+    setReceiptPreview(URL.createObjectURL(file));
+    toast.success("Comprobante adjuntado correctamente");
   };
 
   const removeReceipt = () => {
-    setReceiptImage(null);
-    setReceiptName("");
+    setReceiptFile(null);
+    if (receiptPreview) URL.revokeObjectURL(receiptPreview);
+    setReceiptPreview(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
