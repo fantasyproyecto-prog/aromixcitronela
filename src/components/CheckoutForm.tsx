@@ -308,7 +308,7 @@ const CheckoutForm = () => {
                   </select>
                 </div>
 
-                {isKnownCourier && (
+                {isMRW && (
                   <>
                     <div>
                       <Label htmlFor="mrw-estado">Estado</Label>
@@ -319,14 +319,11 @@ const CheckoutForm = () => {
                     </div>
                     {selectedEstado && (
                       <div>
-                        <Label htmlFor="mrw-oficina">Sede / Oficina de {courier}</Label>
+                        <Label htmlFor="mrw-oficina">Sede / Oficina de MRW</Label>
                         <select id="mrw-oficina" value={selectedOffice} onChange={(e) => setSelectedOffice(e.target.value)} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                           <option value="">Selecciona una sede</option>
                           {offices.map((o) => (<option key={o.codigo} value={o.codigo}>{o.nombre}</option>))}
                         </select>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Mostramos sedes de referencia. El despacho se realizará por <strong>{courier}</strong> a la sede indicada.
-                        </p>
                       </div>
                     )}
                     {officeDetail && (
@@ -337,6 +334,25 @@ const CheckoutForm = () => {
                       </div>
                     )}
                   </>
+                )}
+
+                {isOtherKnownCourier && (
+                  <div className="space-y-3 rounded-lg border border-primary/20 bg-accent/30 p-3">
+                    <p className="text-xs text-muted-foreground">
+                      Indica el estado y la sede exacta de <strong>{courier}</strong> donde quieres recibir tu pedido.
+                    </p>
+                    <div>
+                      <Label htmlFor="courier-estado">Estado</Label>
+                      <select id="courier-estado" value={otroEstado} onChange={(e) => setOtroEstado(e.target.value)} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                        <option value="">Selecciona un estado</option>
+                        {estados.map((e) => (<option key={e} value={e}>{e}</option>))}
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="courier-direccion">Sede / Dirección de {courier}</Label>
+                      <Input id="courier-direccion" value={otroDireccion} onChange={(e) => setOtroDireccion(e.target.value)} required placeholder={`Ej: Sede ${courier} Centro, Av. Principal...`} />
+                    </div>
+                  </div>
                 )}
 
                 {isOtro && (
