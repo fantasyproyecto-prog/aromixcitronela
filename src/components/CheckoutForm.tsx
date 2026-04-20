@@ -91,17 +91,27 @@ const CheckoutForm = () => {
     const detallePedido = items.map((i) => `${i.name} x${i.quantity} - $${(i.priceUSD * i.quantity).toFixed(2)}`).join("; ");
 
     try {
+      const nombreCliente = String(data.get("c-nombre") ?? "");
+      const telCliente = String(data.get("c-tel") ?? "");
+      const dirCliente = String(data.get("c-dir") ?? "");
+      const referencia = String(data.get("referencia") ?? "");
+      const agenciaMrw = officeDetail
+        ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})`
+        : selectedOffice;
+      const shippingAddress = `${dirCliente} | Oficina MRW: ${agenciaMrw}`;
+
       await emailjs.send("service_o369fbm", "template_ah2kxfd", {
-        tipo: "Pedido B2C",
-        nombre: data.get("c-nombre"),
-        telefono: data.get("c-tel"),
-        direccion: data.get("c-dir"),
-        detalle_pedido: detallePedido,
-        total_usd: `$${totalUSD.toFixed(2)}`,
-        total_bs: `Bs ${totalBs.toFixed(2)}`,
-        referencia_pago: data.get("referencia"),
-        agencia_mrw: officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion}` : selectedOffice,
-        adjunto_comprobante: receiptImage,
+        // Asunto
+        subject: `Nueva Orden de Compra - ${nombreCliente}`,
+        // Variables que coinciden con la plantilla template_ah2kxfd
+        user_name: nombreCliente,
+        user_email: "No proporcionado",
+        user_phone: telCliente,
+        items: detallePedido,
+        total_amount: `$${totalUSD.toFixed(2)} (Bs ${totalBs.toFixed(2)})`,
+        shipping_address: shippingAddress,
+        paid_reference: referencia,
+        payment_screenshot: receiptImage,
       }, "un_PzAS5mmnzH1bxY");
 
       sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
