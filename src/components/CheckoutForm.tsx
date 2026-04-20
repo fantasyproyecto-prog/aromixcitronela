@@ -20,14 +20,20 @@ const COURIERS: Exclude<Courier, "">[] = ["MRW", "Liberty Express", "Zoom", "DHL
 const CheckoutForm = () => {
   const { isCheckoutOpen, setIsCheckoutOpen, totalUSD, totalBs, tasaBCV, tasaLoading, clearCart, items } = useCart();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
+  const [courier, setCourier] = useState<Courier>("");
   const [selectedEstado, setSelectedEstado] = useState("");
   const [selectedOffice, setSelectedOffice] = useState("");
+  const [otroEmpresa, setOtroEmpresa] = useState("");
+  const [otroEstado, setOtroEstado] = useState("");
+  const [otroDireccion, setOtroDireccion] = useState("");
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const isOtro = courier === "Otro";
+  const isKnownCourier = courier !== "" && !isOtro;
   const offices = selectedEstado ? getOfficesByState(selectedEstado) : [];
   const officeDetail = offices.find((o) => o.codigo === selectedOffice);
 
