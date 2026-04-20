@@ -107,17 +107,53 @@ function buildHtml(type: string, data: Record<string, any>): { subject: string; 
   throw new Error(`Tipo de correo desconocido: ${type}`);
 }
 
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+async function deleteReceipt(path: string) {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/storage/v1/object/payment-receipts/${path}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${SERVICE_KEY}`, apikey: SERVICE_KEY },
+    });
+    if (!r.ok) console.error("Storage delete failed:", await r.text());
+    else console.log("Receipt deleted:", path);
+  } catch (e) {
+    console.error("Delete error:", e);
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY no configurada");
 
-    const { type, data, replyTo } = await req.json();
+    const { type, data, replyTo, receiptPath } = await req.json();
     if (!type || !data) {
       return new Response(JSON.stringify({ error: "type y data son requeridos" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
+    }
+
+    // Si hay comprobante, descárgalo y adjúntalo (así no depende de la URL pública)
+    let attachments: Array<{ filename: string; content: string }> | undefined;
+    if (data.receiptUrl) {
+      try {
+        const imgRes = await fetch(data.receiptUrl);
+        if (imgRes.ok) {
+          const buf = new Uint8Array(await imgRes.arrayBuffer());
+          let bin = "";
+          for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]);
+          const b64 = btoa(bin);
+          const ext = (receiptPath?.split(".").pop() || "jpg").toLowerCase();
+          attachments = [{ filename: `comprobante-pago.${ext}`, content: b64 }];
+          // Quitamos la URL del HTML porque ya va adjunta
+          data.receiptUrl = "";
+        }
+      } catch (e) {
+        console.error("No se pudo adjuntar comprobante:", e);
+      }
     }
 
     const { subject, html } = buildHtml(type, data);
@@ -128,6 +164,7 @@ Deno.serve(async (req) => {
       body: JSON.stringify({
         from: FROM, to: [TO], subject, html,
         ...(replyTo ? { reply_to: replyTo } : {}),
+        ...(attachments ? { attachments } : {}),
       }),
     });
 
@@ -138,6 +175,9 @@ Deno.serve(async (req) => {
         status: res.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    // Resend confirmó envío → eliminar archivo del Storage
+    if (receiptPath) await deleteReceipt(receiptPath);
 
     return new Response(JSON.stringify({ ok: true, id: result.id }), {
       status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
