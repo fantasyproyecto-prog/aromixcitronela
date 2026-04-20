@@ -7,13 +7,15 @@ import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { estados, getOfficesByState } from "@/data/mrwOffices";
-import { MapPin, CreditCard, CheckCircle, Paperclip, X, ArrowLeft } from "lucide-react";
+import { MapPin, CreditCard, CheckCircle, Paperclip, X, ArrowLeft, Truck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const RATE_LIMIT_KEY = "aromix_checkout_last_send";
 const RATE_LIMIT_MS = 5 * 60 * 1000;
 
 type PaymentMethod = "pago-movil" | null;
+type Courier = "MRW" | "Liberty Express" | "Zoom" | "DHL" | "Otro" | "";
+const COURIERS: Exclude<Courier, "">[] = ["MRW", "Liberty Express", "Zoom", "DHL", "Otro"];
 
 const CheckoutForm = () => {
   const { isCheckoutOpen, setIsCheckoutOpen, totalUSD, totalBs, tasaBCV, tasaLoading, clearCart, items } = useCart();
