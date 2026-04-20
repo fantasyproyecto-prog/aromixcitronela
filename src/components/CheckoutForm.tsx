@@ -404,8 +404,6 @@ const CheckoutForm = () => {
                     </div>
                   );
                 })()}
-                  </div>
-                )}
 
                 {isOtro && (
                   <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
