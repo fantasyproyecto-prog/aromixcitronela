@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { CheckCircle } from "lucide-react";
-import emailjs from "@emailjs/browser";
+import { supabase } from "@/integrations/supabase/client";
 
 const RATE_LIMIT_KEY = "aromix_dist_last_send";
 const RATE_LIMIT_MS = 5 * 60 * 1000;
@@ -44,30 +44,20 @@ const DistributorForms = () => {
       const telefono = String(data.get("e-tel") ?? "");
       const email = String(data.get("e-email") ?? "");
 
-      await emailjs.send("service_o369fbm", "template_4k8llbl", {
-        // Asunto dinámico
-        subject: `Nueva Solicitud de Distribución - ${nombre}`,
-        asunto: `Nueva Solicitud de Distribución - ${nombre}`,
+      const { error } = await supabase.functions.invoke("send-aromix-email", {
+        body: {
+          type: "emprendedor",
+          replyTo: email,
+          data: { name: nombre, email, phone: telefono, address: direccion, zone: zona, investment: inversion },
+        },
+      });
+      if (error) throw error;
 
-        // DATOS DEL SOLICITANTE
-        nombre_razon_social: nombre,
-        ubicacion: zona,
-        telefono_contacto: telefono,
-        email_contacto: email,
-        direccion: direccion,
-
-        // DETALLES DE LA SOLICITUD
-        tipo_interes: "Emprendedor",
-        volumen_estimado: `Inversión estimada: ${inversion} USD`,
-        mensaje_propuesta: `Solicitud de emprendimiento desde la zona ${zona}, con una inversión estimada de ${inversion} USD.`,
-
-        // Reply-to para responder directo al cliente
-        reply_to: email,
-      }, "un_PzAS5mmnzH1bxY");
       sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
       toast.success("¡Solicitud enviada con éxito! Nos pondremos en contacto contigo pronto.");
       setSuccess(true);
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error("Error al enviar. Por favor, intenta de nuevo.");
     } finally {
       setSending(false);
@@ -98,31 +88,23 @@ const DistributorForms = () => {
       const similar = String(data.get("d-similar") ?? "No especificado");
       const detalle = String(data.get("d-detalle") ?? "Sin detalles adicionales");
 
-      await emailjs.send("service_o369fbm", "template_4k8llbl", {
-        // Asunto dinámico
-        subject: `Nueva Solicitud de Distribución - ${empresa}`,
-        asunto: `Nueva Solicitud de Distribución - ${empresa}`,
+      const { error } = await supabase.functions.invoke("send-aromix-email", {
+        body: {
+          type: "distribuidor",
+          replyTo: email,
+          data: {
+            name: nombre, company: empresa, rif, phone: telefono, email,
+            address: direccion, segment: segmento, salesforce: fuerza, similar, detail: detalle,
+          },
+        },
+      });
+      if (error) throw error;
 
-        // DATOS DEL SOLICITANTE
-        nombre_razon_social: `${empresa} (Contacto: ${nombre})`,
-        ubicacion: direccion,
-        telefono_contacto: telefono,
-        email_contacto: email,
-        rif: rif,
-        direccion: direccion,
-
-        // DETALLES DE LA SOLICITUD
-        tipo_interes: "Distribuidor Masivo",
-        volumen_estimado: `Fuerza de ventas: ${fuerza} vendedores · Segmento: ${segmento}`,
-        mensaje_propuesta: `Empresa del segmento ${segmento} con ${fuerza} vendedores. ¿Ha comercializado producto similar?: ${similar}. Detalle: ${detalle}`,
-
-        // Reply-to para responder directo al cliente
-        reply_to: email,
-      }, "un_PzAS5mmnzH1bxY");
       sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
       toast.success("¡Información recibida! Nuestro equipo revisará tu solicitud.");
       setSuccess(true);
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast.error("Error al enviar. Por favor, intenta de nuevo.");
     } finally {
       setSending(false);
