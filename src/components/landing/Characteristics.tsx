@@ -1,7 +1,7 @@
 import { CalendarDays, Repeat, Timer, ShieldCheck } from "lucide-react";
 
 const specs = [
-  { icon: CalendarDays, value: "30+ días", label: "de duración por lata (configurado a 30 min)" },
+  { icon: CalendarDays, value: "30 días", label: "de duración por lata (configurado a 30 min)" },
   { icon: Repeat, value: "3,200", label: "aplicaciones por unidad" },
   { icon: Timer, value: "7.5 / 15 / 30", label: "minutos — intervalos ajustables" },
   { icon: ShieldCheck, value: "24/7", label: "cobertura continua sin interrupciones" },
