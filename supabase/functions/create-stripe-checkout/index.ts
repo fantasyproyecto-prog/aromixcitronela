@@ -137,6 +137,13 @@ Deno.serve(async (req) => {
       }),
       metadata: {
         order_id: order.id,
+        shipping_courier: (body.shipping.courier ?? "").slice(0, 500),
+        shipping_state: (body.shipping.state ?? "").slice(0, 500),
+        shipping_office: (body.shipping.office ?? "").slice(0, 500),
+        shipping_summary: (body.shipping.summary ?? "").slice(0, 500),
+        shipping_other_company: (body.shipping.other?.company ?? "").slice(0, 500),
+        shipping_other_state: (body.shipping.other?.state ?? "").slice(0, 500),
+        shipping_other_address: (body.shipping.other?.address ?? "").slice(0, 500),
       },
       success_url: `${body.successUrl}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: body.cancelUrl,
