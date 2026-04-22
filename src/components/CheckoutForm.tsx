@@ -99,6 +99,14 @@ const CheckoutForm = () => {
       toast.error("Adjunta el capture del comprobante de pago");
       return;
     }
+    if (!bancoEmisor.trim()) {
+      toast.error("Indica el banco emisor del Pago Móvil");
+      return;
+    }
+    if (!fechaPago) {
+      toast.error("Indica la fecha del pago");
+      return;
+    }
 
     const form = e.target as HTMLFormElement;
     const data = new FormData(form);
@@ -123,14 +131,12 @@ const CheckoutForm = () => {
       const dirCliente = String(data.get("c-dir") ?? "");
       const referencia = String(data.get("referencia") ?? "");
 
-      // Consolidar shipping_address según la opción elegida
       const shipping_address = isOtro
         ? `Envío por: ${otroEmpresa.trim()} - Estado: ${otroEstado.trim()} - Dirección: ${otroDireccion.trim()}`
         : isMRW
           ? `MRW - ${officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})` : selectedOffice}`
           : `${courier} - Estado: ${otroEstado.trim()} - Sede: ${otroDireccion.trim()}`;
 
-      // 1. Subir comprobante a Storage → URL pública
       const ext = receiptFile.name.split(".").pop()?.toLowerCase() || "jpg";
       const filePath = `${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage
@@ -140,7 +146,10 @@ const CheckoutForm = () => {
       const { data: pub } = supabase.storage.from("payment-receipts").getPublicUrl(filePath);
       const receiptUrl = pub.publicUrl;
 
-      // 2. Enviar correo vía Resend (Edge Function)
+      const itemsPayload = items.map((i) => ({ name: i.name, qty: i.quantity, price: i.priceUSD }));
+      const totalLabel = `$${totalUSD.toFixed(2)} / Bs ${totalBs.toFixed(2)}`;
+
+      // 2a. Correo a Logística (con comprobante adjunto)
       const { error: fnErr } = await supabase.functions.invoke("send-aromix-email", {
         body: {
           type: "checkout",
@@ -158,13 +167,40 @@ const CheckoutForm = () => {
               ? { company: otroEmpresa.trim(), state: otroEstado.trim(), address: otroDireccion.trim() }
               : undefined,
             reference: referencia,
-            items: items.map((i) => ({ name: i.name, qty: i.quantity, price: i.priceUSD })),
-            total: `$${totalUSD.toFixed(2)} / Bs ${totalBs.toFixed(2)}`,
+            bank: bancoEmisor.trim(),
+            paymentDate: fechaPago,
+            items: itemsPayload,
+            total: totalLabel,
             receiptUrl,
           },
         },
       });
       if (fnErr) throw fnErr;
+
+      // 2b. Correo al Cliente (no bloqueante)
+      if (emailCliente) {
+        try {
+          const { error: custErr } = await supabase.functions.invoke("send-aromix-email", {
+            body: {
+              type: "customer_pago_movil",
+              to: emailCliente,
+              data: {
+                name: nombreCliente,
+                shipping: shipping_address,
+                address: dirCliente,
+                reference: referencia,
+                bank: bancoEmisor.trim(),
+                paymentDate: fechaPago,
+                items: itemsPayload,
+                total: totalLabel,
+              },
+            },
+          });
+          if (custErr) console.error("Customer email failed:", custErr);
+        } catch (cErr) {
+          console.error("Customer email exception:", cErr);
+        }
+      }
 
       sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
       toast.success("¡Pedido confirmado! Hemos recibido tu comprobante de pago. Te contactaremos pronto.");
