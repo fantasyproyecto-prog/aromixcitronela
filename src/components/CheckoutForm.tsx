@@ -291,6 +291,8 @@ const CheckoutForm = () => {
       setOtroEmpresa("");
       setOtroEstado("");
       setOtroDireccion("");
+      setBancoEmisor("");
+      setFechaPago("");
       setStripeCustomer({ name: "", email: "", phone: "", address: "" });
       removeReceipt();
     }
