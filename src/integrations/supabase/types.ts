@@ -14,7 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      orders: {
+        Row: {
+          created_at: string
+          currency: string
+          customer_address: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          email_sent: boolean
+          id: string
+          items: Json
+          payment_method: string
+          payment_reference: string | null
+          receipt_path: string | null
+          receipt_url: string | null
+          shipping_courier: string
+          shipping_office: string | null
+          shipping_other: Json | null
+          shipping_state: string | null
+          shipping_summary: string
+          status: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          customer_address: string
+          customer_email: string
+          customer_name: string
+          customer_phone: string
+          email_sent?: boolean
+          id?: string
+          items: Json
+          payment_method: string
+          payment_reference?: string | null
+          receipt_path?: string | null
+          receipt_url?: string | null
+          shipping_courier: string
+          shipping_office?: string | null
+          shipping_other?: Json | null
+          shipping_state?: string | null
+          shipping_summary: string
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          customer_address?: string
+          customer_email?: string
+          customer_name?: string
+          customer_phone?: string
+          email_sent?: boolean
+          id?: string
+          items?: Json
+          payment_method?: string
+          payment_reference?: string | null
+          receipt_path?: string | null
+          receipt_url?: string | null
+          shipping_courier?: string
+          shipping_office?: string | null
+          shipping_other?: Json | null
+          shipping_state?: string | null
+          shipping_summary?: string
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
