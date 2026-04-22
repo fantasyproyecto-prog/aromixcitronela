@@ -4,8 +4,8 @@ const corsHeaders = {
 };
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-const FROM = "Aromix Citronela <onboarding@resend.dev>";
-const TO = "Aromix.pa@gmail.com";
+const FROM = "Aromix Citronela <pedidos@aromixcitronela.com>";
+const DEFAULT_TO = "Aromix.pa@gmail.com";
 
 const BRAND_GREEN = "#7AB317";
 const BRAND_DARK = "#2D4A0F";
