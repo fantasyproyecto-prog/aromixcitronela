@@ -64,44 +64,67 @@ Deno.serve(async (req) => {
         return new Response("DB error", { status: 500 });
       }
 
-      // Disparar email si no se ha enviado
+      // Disparar emails (cliente + logística) sin bloquear el 200
       if (!order.email_sent) {
-        try {
-          const items = Array.isArray(order.items)
-            ? (order.items as Array<{ name: string; priceUSD: number; quantity: number }>).map((i) => ({
-                name: i.name,
-                qty: i.quantity,
-                price: i.priceUSD,
-              }))
-            : [];
+        const items = Array.isArray(order.items)
+          ? (order.items as Array<{ name: string; priceUSD: number; quantity: number }>).map((i) => ({
+              name: i.name,
+              qty: i.quantity,
+              price: i.priceUSD,
+            }))
+          : [];
 
+        const baseData = {
+          name: order.customer_name,
+          email: order.customer_email,
+          phone: order.customer_phone,
+          address: order.customer_address,
+          shipping: order.shipping_summary,
+          shippingCourier: order.shipping_courier,
+          shippingIsOther: order.shipping_courier === "Otro",
+          shippingOther: order.shipping_other ?? undefined,
+          reference: `Stripe: ${session.id}`,
+          items,
+          total: `$${Number(order.total_amount).toFixed(2)} (Tarjeta - Stripe)`,
+          paymentMethod: "Tarjeta (Stripe)",
+        };
+
+        let logisticsOk = false;
+        let customerOk = false;
+
+        // 1) Correo a Logística (Aromix.pa@gmail.com)
+        try {
           const { error: fnErr } = await supabase.functions.invoke("send-aromix-email", {
             body: {
               type: "checkout",
               replyTo: order.customer_email,
-              data: {
-                name: order.customer_name,
-                email: order.customer_email,
-                phone: order.customer_phone,
-                address: order.customer_address,
-                shipping: order.shipping_summary,
-                shippingCourier: order.shipping_courier,
-                shippingIsOther: order.shipping_courier === "Otro",
-                shippingOther: order.shipping_other ?? undefined,
-                reference: `Stripe: ${session.id}`,
-                items,
-                total: `$${Number(order.total_amount).toFixed(2)} (Tarjeta - Stripe)`,
-                paymentMethod: "Tarjeta (Stripe)",
-              },
+              to: "Aromix.pa@gmail.com",
+              data: baseData,
             },
           });
-          if (fnErr) {
-            console.error("Error enviando email:", fnErr);
-          } else {
-            await supabase.from("orders").update({ email_sent: true }).eq("id", orderId);
-          }
+          if (fnErr) console.error("Error enviando email a logística:", fnErr);
+          else logisticsOk = true;
         } catch (e) {
-          console.error("Excepción enviando email:", e);
+          console.error("Excepción enviando email a logística:", e);
+        }
+
+        // 2) Correo de confirmación al Cliente
+        try {
+          const { error: fnErr } = await supabase.functions.invoke("send-aromix-email", {
+            body: {
+              type: "customer_checkout",
+              to: order.customer_email,
+              data: baseData,
+            },
+          });
+          if (fnErr) console.error("Error enviando email al cliente:", fnErr);
+          else customerOk = true;
+        } catch (e) {
+          console.error("Excepción enviando email al cliente:", e);
+        }
+
+        if (logisticsOk && customerOk) {
+          await supabase.from("orders").update({ email_sent: true }).eq("id", orderId);
         }
       }
     } else if (
