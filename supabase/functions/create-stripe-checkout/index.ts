@@ -113,6 +113,8 @@ Deno.serve(async (req) => {
   // 2. Crear sesión de Stripe Checkout
   const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2024-12-18.acacia" });
 
+  console.log("[create-stripe-checkout] order created", order.id, "items:", body.items.length);
+
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
