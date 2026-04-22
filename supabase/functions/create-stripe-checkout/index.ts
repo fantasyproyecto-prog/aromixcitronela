@@ -113,24 +113,39 @@ Deno.serve(async (req) => {
   // 2. Crear sesión de Stripe Checkout
   const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2024-12-18.acacia" });
 
+  console.log("[create-stripe-checkout] order created", order.id, "items:", body.items.length);
+
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
       customer_email: body.customer.email,
-      line_items: body.items.map((i) => ({
-        quantity: i.quantity,
-        price_data: {
-          currency: "usd",
-          unit_amount: Math.round(i.priceUSD * 100),
-          product_data: {
-            name: i.name,
-            ...(i.image ? { images: [i.image] } : {}),
+      line_items: body.items.map((i) => {
+        const isAbsoluteUrl = typeof i.image === "string" && /^https?:\/\//i.test(i.image);
+        if (i.image && !isAbsoluteUrl) {
+          console.log(`Omitiendo imagen no-absoluta para "${i.name}": ${i.image}`);
+        }
+        return {
+          quantity: i.quantity,
+          price_data: {
+            currency: "usd",
+            unit_amount: Math.round(i.priceUSD * 100),
+            product_data: {
+              name: i.name,
+              ...(isAbsoluteUrl ? { images: [i.image as string] } : {}),
+            },
           },
-        },
-      })),
+        };
+      }),
       metadata: {
         order_id: order.id,
+        shipping_courier: (body.shipping.courier ?? "").slice(0, 500),
+        shipping_state: (body.shipping.state ?? "").slice(0, 500),
+        shipping_office: (body.shipping.office ?? "").slice(0, 500),
+        shipping_summary: (body.shipping.summary ?? "").slice(0, 500),
+        shipping_other_company: (body.shipping.other?.company ?? "").slice(0, 500),
+        shipping_other_state: (body.shipping.other?.state ?? "").slice(0, 500),
+        shipping_other_address: (body.shipping.other?.address ?? "").slice(0, 500),
       },
       success_url: `${body.successUrl}?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: body.cancelUrl,
