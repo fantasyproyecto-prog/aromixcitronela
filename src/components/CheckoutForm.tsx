@@ -670,6 +670,17 @@ const CheckoutForm = () => {
                 <Input id="referencia" name="referencia" placeholder="Ej: 123456" required />
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="banco-emisor">Banco emisor</Label>
+                  <Input id="banco-emisor" value={bancoEmisor} onChange={(e) => setBancoEmisor(e.target.value)} required placeholder="Ej: Mercantil, BDV, BNC..." />
+                </div>
+                <div>
+                  <Label htmlFor="fecha-pago">Fecha del pago</Label>
+                  <Input id="fecha-pago" type="date" value={fechaPago} onChange={(e) => setFechaPago(e.target.value)} required />
+                </div>
+              </div>
+
               <div className="space-y-2">
                 <Label>Adjuntar capture del comprobante</Label>
                 <input
