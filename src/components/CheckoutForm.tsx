@@ -33,6 +33,8 @@ const CheckoutForm = () => {
   const [otroEmpresa, setOtroEmpresa] = useState("");
   const [otroEstado, setOtroEstado] = useState("");
   const [otroDireccion, setOtroDireccion] = useState("");
+  const [bancoEmisor, setBancoEmisor] = useState("");
+  const [fechaPago, setFechaPago] = useState("");
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [stripeLoading, setStripeLoading] = useState(false);
