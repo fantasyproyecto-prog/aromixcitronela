@@ -12,6 +12,7 @@ import DistributorForms from "@/components/landing/DistributorForms";
 import ClosingFooter from "@/components/landing/ClosingFooter";
 import CartDrawer from "@/components/CartDrawer";
 import CheckoutForm from "@/components/CheckoutForm";
+import StripeReturnHandler from "@/components/StripeReturnHandler";
 import { CartProvider } from "@/contexts/CartContext";
 
 const Index = () => (
@@ -30,6 +31,7 @@ const Index = () => (
     <ClosingFooter />
     <CartDrawer />
     <CheckoutForm />
+    <StripeReturnHandler />
   </CartProvider>
 );
 
