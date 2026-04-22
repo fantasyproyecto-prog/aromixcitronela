@@ -242,7 +242,7 @@ const CheckoutForm = () => {
     }
   };
 
-
+  const handleClose = (open: boolean) => {
     setIsCheckoutOpen(open);
     if (!open) {
       setSuccess(false);
@@ -253,6 +253,7 @@ const CheckoutForm = () => {
       setOtroEmpresa("");
       setOtroEstado("");
       setOtroDireccion("");
+      setStripeCustomer({ name: "", email: "", phone: "", address: "" });
       removeReceipt();
     }
   };
