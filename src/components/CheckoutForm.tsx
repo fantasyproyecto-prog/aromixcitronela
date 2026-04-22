@@ -233,13 +233,7 @@ const CheckoutForm = () => {
               {/* Tarjeta Stripe */}
               <button
                 type="button"
-                onClick={() => {
-                  if (!courier) {
-                    toast.error("Primero selecciona la empresa de envío en el formulario de Pago Móvil para registrar tu pedido. O haz clic en Pago Móvil → completa los datos → vuelve y elige Tarjeta.");
-                    return;
-                  }
-                  setPaymentMethod("stripe");
-                }}
+                onClick={() => setPaymentMethod("stripe")}
                 className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-primary/40 hover:border-primary hover:bg-primary/5 transition-colors text-left"
               >
                 <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
