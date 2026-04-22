@@ -118,17 +118,23 @@ Deno.serve(async (req) => {
       mode: "payment",
       payment_method_types: ["card"],
       customer_email: body.customer.email,
-      line_items: body.items.map((i) => ({
-        quantity: i.quantity,
-        price_data: {
-          currency: "usd",
-          unit_amount: Math.round(i.priceUSD * 100),
-          product_data: {
-            name: i.name,
-            ...(i.image ? { images: [i.image] } : {}),
+      line_items: body.items.map((i) => {
+        const isAbsoluteUrl = typeof i.image === "string" && /^https?:\/\//i.test(i.image);
+        if (i.image && !isAbsoluteUrl) {
+          console.log(`Omitiendo imagen no-absoluta para "${i.name}": ${i.image}`);
+        }
+        return {
+          quantity: i.quantity,
+          price_data: {
+            currency: "usd",
+            unit_amount: Math.round(i.priceUSD * 100),
+            product_data: {
+              name: i.name,
+              ...(isAbsoluteUrl ? { images: [i.image as string] } : {}),
+            },
           },
-        },
-      })),
+        };
+      }),
       metadata: {
         order_id: order.id,
       },
