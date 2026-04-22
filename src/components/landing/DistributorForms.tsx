@@ -11,7 +11,7 @@ const RATE_LIMIT_KEY = "aromix_dist_last_send";
 const RATE_LIMIT_MS = 5 * 60 * 1000;
 
 const DistributorForms = () => {
-  const [tab, setTab] = useState<"emprender" | "empresa">("emprender");
+  const [tab, setTab] = useState<"mayorista" | "emprender" | "empresa">("mayorista");
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -22,6 +22,47 @@ const DistributorForms = () => {
       return false;
     }
     return true;
+  };
+
+  const handleSubmitMayorista = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const data = new FormData(form);
+
+    if (data.get("company_website")) {
+      toast.success("¡Solicitud enviada con éxito!");
+      return;
+    }
+    if (!checkRateLimit()) return;
+
+    setSending(true);
+    try {
+      const nombre = String(data.get("m-nombre") ?? "");
+      const email = String(data.get("m-email") ?? "");
+      const telefono = String(data.get("m-tel") ?? "");
+      const ubicacion = String(data.get("m-ubicacion") ?? "");
+      const producto = String(data.get("m-producto") ?? "");
+      const cantidad = String(data.get("m-cantidad") ?? "");
+      const mensaje = String(data.get("m-mensaje") ?? "");
+
+      const { error } = await supabase.functions.invoke("send-aromix-email", {
+        body: {
+          type: "mayorista",
+          replyTo: email,
+          data: { name: nombre, email, phone: telefono, location: ubicacion, product: producto, quantity: cantidad, message: mensaje },
+        },
+      });
+      if (error) throw error;
+
+      sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
+      toast.success("¡Cotización solicitada! Te contactaremos pronto.");
+      setSuccess(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Error al enviar. Por favor, intenta de nuevo.");
+    } finally {
+      setSending(false);
+    }
   };
 
   const handleSubmitEmprender = async (e: React.FormEvent<HTMLFormElement>) => {
