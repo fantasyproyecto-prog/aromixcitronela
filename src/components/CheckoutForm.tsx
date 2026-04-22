@@ -20,7 +20,7 @@ const COURIER_KEY_MAP: Record<string, CourierKey> = {
 const RATE_LIMIT_KEY = "aromix_checkout_last_send";
 const RATE_LIMIT_MS = 5 * 60 * 1000;
 
-type PaymentMethod = "pago-movil" | null;
+type PaymentMethod = "pago-movil" | "stripe" | null;
 type Courier = "MRW" | "Liberty Express" | "Zoom" | "DHL" | "Otro" | "";
 const COURIERS: Exclude<Courier, "">[] = ["MRW", "Liberty Express", "Zoom", "DHL", "Otro"];
 
@@ -35,6 +35,8 @@ const CheckoutForm = () => {
   const [otroDireccion, setOtroDireccion] = useState("");
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeCustomer, setStripeCustomer] = useState({ name: "", email: "", phone: "", address: "" });
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -174,6 +176,72 @@ const CheckoutForm = () => {
     }
   };
 
+  const buildShippingPayload = () => {
+    const shipping_summary = isOtro
+      ? `Envío por: ${otroEmpresa.trim()} - Estado: ${otroEstado.trim()} - Dirección: ${otroDireccion.trim()}`
+      : isMRW
+        ? `MRW - ${officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})` : selectedOffice}`
+        : `${courier} - Estado: ${otroEstado.trim()} - Sede: ${otroDireccion.trim()}`;
+    return {
+      courier,
+      summary: shipping_summary,
+      state: isMRW ? selectedEstado : (isOtro ? otroEstado.trim() : otroEstado.trim()),
+      office: isMRW ? selectedOffice : (isOtro ? undefined : otroDireccion.trim()),
+      other: isOtro ? { company: otroEmpresa.trim(), state: otroEstado.trim(), address: otroDireccion.trim() } : null,
+    };
+  };
+
+  const validateShipping = () => {
+    if (!courier) { toast.error("Selecciona la empresa de envío (courier)"); return false; }
+    if (isOtro) {
+      if (!otroEmpresa.trim() || !otroEstado.trim() || !otroDireccion.trim()) { toast.error("Completa los campos de la empresa de envío"); return false; }
+    } else if (isMRW) {
+      if (!selectedOffice) { toast.error("Selecciona la sede de MRW"); return false; }
+    } else {
+      if (!otroEstado.trim() || !otroDireccion.trim()) { toast.error(`Indica el estado y la sede de ${courier}`); return false; }
+    }
+    return true;
+  };
+
+  const handleStripeSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const data = new FormData(form);
+    if (data.get("website_url")) { toast.success("¡Pedido confirmado!"); return; }
+
+    if (!stripeCustomer.name || !stripeCustomer.email || !stripeCustomer.phone || !stripeCustomer.address) {
+      toast.error("Completa todos los datos de envío");
+      return;
+    }
+    if (!validateShipping()) return;
+
+    setStripeLoading(true);
+    try {
+      const shipping = buildShippingPayload();
+      const successUrl = `${window.location.origin}/?stripe=success`;
+      const cancelUrl = `${window.location.origin}/?stripe=cancel`;
+
+      const { data: resp, error } = await supabase.functions.invoke("create-stripe-checkout", {
+        body: {
+          customer: stripeCustomer,
+          shipping,
+          items: items.map((i) => ({ id: i.id, name: i.name, priceUSD: i.priceUSD, quantity: i.quantity, image: i.image })),
+          successUrl,
+          cancelUrl,
+        },
+      });
+      if (error) throw error;
+      if (!resp?.url) throw new Error("Stripe no devolvió URL de checkout");
+
+      window.location.href = resp.url;
+    } catch (err) {
+      console.error("Stripe checkout error:", err);
+      const msg = err instanceof Error ? err.message : "Error iniciando el pago con tarjeta";
+      toast.error(msg);
+      setStripeLoading(false);
+    }
+  };
+
   const handleClose = (open: boolean) => {
     setIsCheckoutOpen(open);
     if (!open) {
@@ -185,6 +253,7 @@ const CheckoutForm = () => {
       setOtroEmpresa("");
       setOtroEstado("");
       setOtroDireccion("");
+      setStripeCustomer({ name: "", email: "", phone: "", address: "" });
       removeReceipt();
     }
   };
@@ -228,17 +297,20 @@ const CheckoutForm = () => {
                 </div>
               </button>
 
-              {/* Tarjeta Stripe - próximamente */}
-              <div className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-border bg-muted/40 opacity-70 cursor-not-allowed">
-                <div className="h-12 w-12 rounded-full bg-background flex items-center justify-center shrink-0">
-                  <CreditCard className="h-6 w-6 text-muted-foreground" />
+              {/* Tarjeta Stripe */}
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("stripe")}
+                className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-primary/40 hover:border-primary hover:bg-primary/5 transition-colors text-left"
+              >
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <CreditCard className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-muted-foreground">Tarjeta internacional (USD)</p>
-                  <p className="text-xs text-muted-foreground">Visa / Mastercard vía Stripe</p>
+                  <p className="font-semibold text-foreground">Tarjeta internacional (USD)</p>
+                  <p className="text-xs text-muted-foreground">Visa / Mastercard vía Stripe Checkout</p>
                 </div>
-                <span className="text-xs font-semibold bg-amber-500/20 text-amber-700 px-2 py-1 rounded-full">Próximamente</span>
-              </div>
+              </button>
 
               {/* PayPal - próximamente */}
               <div className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-border bg-muted/40 opacity-70 cursor-not-allowed">
@@ -252,6 +324,119 @@ const CheckoutForm = () => {
                 <span className="text-xs font-semibold bg-amber-500/20 text-amber-700 px-2 py-1 rounded-full">Próximamente</span>
               </div>
             </div>
+          </>
+        ) : paymentMethod === "stripe" ? (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                <button type="button" onClick={() => setPaymentMethod(null)} className="text-muted-foreground hover:text-foreground" aria-label="Volver">
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+                Pago con tarjeta (Stripe)
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="bg-accent/50 rounded-xl p-4 space-y-2 text-sm">
+              <p className="font-semibold text-foreground">Resumen del pedido</p>
+              {items.map((i) => (
+                <div key={i.id} className="flex justify-between text-muted-foreground">
+                  <span>{i.name} × {i.quantity}</span>
+                  <span>${(i.priceUSD * i.quantity).toFixed(2)}</span>
+                </div>
+              ))}
+              <Separator />
+              <div className="flex justify-between font-bold text-foreground">
+                <span>Total a cobrar</span>
+                <span>${totalUSD.toFixed(2)} USD</span>
+              </div>
+              <p className="text-xs text-muted-foreground">El pago se procesa en USD por Stripe Checkout.</p>
+            </div>
+
+            <form onSubmit={handleStripeSubmit} className="space-y-4 mt-2">
+              <input type="text" name="website_url" tabIndex={-1} autoComplete="off" className="opacity-0 absolute -z-10 w-0 h-0" />
+
+              <p className="text-sm font-semibold text-foreground">Datos de envío</p>
+              <div><Label htmlFor="s-nombre">Nombre completo</Label><Input id="s-nombre" value={stripeCustomer.name} onChange={(e) => setStripeCustomer((c) => ({ ...c, name: e.target.value }))} required /></div>
+              <div><Label htmlFor="s-email">Correo electrónico</Label><Input id="s-email" type="email" value={stripeCustomer.email} onChange={(e) => setStripeCustomer((c) => ({ ...c, email: e.target.value }))} required placeholder="tu@correo.com" /></div>
+              <div><Label htmlFor="s-tel">Teléfono</Label><Input id="s-tel" type="tel" value={stripeCustomer.phone} onChange={(e) => setStripeCustomer((c) => ({ ...c, phone: e.target.value }))} required /></div>
+              <div><Label htmlFor="s-dir">Dirección de envío</Label><Input id="s-dir" value={stripeCustomer.address} onChange={(e) => setStripeCustomer((c) => ({ ...c, address: e.target.value }))} required /></div>
+
+              <Separator />
+              <div className="space-y-3">
+                <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-primary" /> Empresa de envío (Courier)
+                </p>
+                <div>
+                  <Label htmlFor="s-courier">Selecciona el courier</Label>
+                  <select id="s-courier" value={courier} onChange={(e) => { setCourier(e.target.value as Courier); setSelectedEstado(""); setSelectedOffice(""); setOtroEmpresa(""); setOtroEstado(""); setOtroDireccion(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                    <option value="">Selecciona una empresa</option>
+                    {COURIERS.map((c) => (<option key={c} value={c}>{c === "Otro" ? "Otro (Especificar)" : c}</option>))}
+                  </select>
+                </div>
+
+                {isMRW && (
+                  <>
+                    <div>
+                      <Label>Estado</Label>
+                      <select value={selectedEstado} onChange={(e) => { setSelectedEstado(e.target.value); setSelectedOffice(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                        <option value="">Selecciona un estado</option>
+                        {estados.map((e) => (<option key={e} value={e}>{e}</option>))}
+                      </select>
+                    </div>
+                    {selectedEstado && (
+                      <div>
+                        <Label>Sede MRW</Label>
+                        <select value={selectedOffice} onChange={(e) => setSelectedOffice(e.target.value)} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                          <option value="">Selecciona una sede</option>
+                          {offices.map((o) => (<option key={o.codigo} value={o.codigo}>{o.nombre}</option>))}
+                        </select>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {isOtherKnownCourier && (() => {
+                  const courierKey = COURIER_KEY_MAP[courier];
+                  const courierStates = getCourierStates(courierKey);
+                  const courierOffices = otroEstado ? getCourierOffices(courierKey, otroEstado) : [];
+                  return (
+                    <div className="space-y-3 rounded-lg border border-primary/20 bg-accent/30 p-3">
+                      <div>
+                        <Label>Estado</Label>
+                        <select value={otroEstado} onChange={(e) => { setOtroEstado(e.target.value); setOtroDireccion(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                          <option value="">Selecciona un estado</option>
+                          {courierStates.map((s) => (<option key={s} value={s}>{s}</option>))}
+                        </select>
+                      </div>
+                      {otroEstado && (
+                        <div>
+                          <Label>Sede de {courier}</Label>
+                          <select value={otroDireccion} onChange={(e) => setOtroDireccion(e.target.value)} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                            <option value="">Selecciona una sede</option>
+                            {courierOffices.map((o, idx) => (<option key={`${o.name}-${idx}`} value={`${o.name} — ${o.address}`}>{o.name}</option>))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {isOtro && (
+                  <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                    <div><Label>Empresa de envío</Label><Input value={otroEmpresa} onChange={(e) => setOtroEmpresa(e.target.value)} required placeholder="Ej: Tealca, Domesa" /></div>
+                    <div><Label>Estado</Label><Input value={otroEstado} onChange={(e) => setOtroEstado(e.target.value)} required /></div>
+                    <div><Label>Sede / Dirección</Label><Input value={otroDireccion} onChange={(e) => setOtroDireccion(e.target.value)} required /></div>
+                  </div>
+                )}
+              </div>
+
+              <Button type="submit" disabled={stripeLoading} className="w-full bg-primary hover:bg-citric-dark text-primary-foreground font-semibold rounded-full disabled:opacity-50" size="lg">
+                {stripeLoading ? "Redirigiendo a Stripe..." : `Pagar $${totalUSD.toFixed(2)} con tarjeta`}
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Serás redirigido al portal seguro de Stripe para completar el pago.
+              </p>
+            </form>
           </>
         ) : (
           <>
