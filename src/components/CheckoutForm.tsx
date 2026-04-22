@@ -20,7 +20,7 @@ const COURIER_KEY_MAP: Record<string, CourierKey> = {
 const RATE_LIMIT_KEY = "aromix_checkout_last_send";
 const RATE_LIMIT_MS = 5 * 60 * 1000;
 
-type PaymentMethod = "pago-movil" | null;
+type PaymentMethod = "pago-movil" | "stripe" | null;
 type Courier = "MRW" | "Liberty Express" | "Zoom" | "DHL" | "Otro" | "";
 const COURIERS: Exclude<Courier, "">[] = ["MRW", "Liberty Express", "Zoom", "DHL", "Otro"];
 
@@ -35,6 +35,8 @@ const CheckoutForm = () => {
   const [otroDireccion, setOtroDireccion] = useState("");
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeCustomer, setStripeCustomer] = useState({ name: "", email: "", phone: "", address: "" });
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
