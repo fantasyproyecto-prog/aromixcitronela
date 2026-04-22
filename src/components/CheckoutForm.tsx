@@ -230,17 +230,26 @@ const CheckoutForm = () => {
                 </div>
               </button>
 
-              {/* Tarjeta Stripe - próximamente */}
-              <div className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-border bg-muted/40 opacity-70 cursor-not-allowed">
-                <div className="h-12 w-12 rounded-full bg-background flex items-center justify-center shrink-0">
-                  <CreditCard className="h-6 w-6 text-muted-foreground" />
+              {/* Tarjeta Stripe */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!courier) {
+                    toast.error("Primero selecciona la empresa de envío en el formulario de Pago Móvil para registrar tu pedido. O haz clic en Pago Móvil → completa los datos → vuelve y elige Tarjeta.");
+                    return;
+                  }
+                  setPaymentMethod("stripe");
+                }}
+                className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-primary/40 hover:border-primary hover:bg-primary/5 transition-colors text-left"
+              >
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <CreditCard className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-muted-foreground">Tarjeta internacional (USD)</p>
-                  <p className="text-xs text-muted-foreground">Visa / Mastercard vía Stripe</p>
+                  <p className="font-semibold text-foreground">Tarjeta internacional (USD)</p>
+                  <p className="text-xs text-muted-foreground">Visa / Mastercard vía Stripe Checkout</p>
                 </div>
-                <span className="text-xs font-semibold bg-amber-500/20 text-amber-700 px-2 py-1 rounded-full">Próximamente</span>
-              </div>
+              </button>
 
               {/* PayPal - próximamente */}
               <div className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-border bg-muted/40 opacity-70 cursor-not-allowed">
