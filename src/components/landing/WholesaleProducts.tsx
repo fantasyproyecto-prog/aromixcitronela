@@ -1,10 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle } from "lucide-react";
+import { FileText } from "lucide-react";
 import caja12Img from "@/assets/caja-12.jpg";
 import caja72Img from "@/assets/caja-72.jpg";
-
-const WHOLESALE_PHONE = "18136102658";
 
 const wholesaleProducts = [
   {
@@ -12,21 +10,21 @@ const wholesaleProducts = [
     name: "Caja de 12 Unidades",
     description: "Presentación ideal para emprendedores que desean iniciar su negocio con Aromix Citronela.",
     image: caja12Img,
-    waMessage: "Hola, me interesa comprar la caja de 12 unidades de Aromix al mayor.",
   },
   {
     id: "caja-72",
     name: "Caja Master de 72 Unidades",
     description: "Volumen mayorista para distribuidores y empresas con alta demanda de protección contra insectos.",
     image: caja72Img,
-    waMessage: "Hola, me interesa comprar la caja de 72 unidades de Aromix al mayor.",
   },
 ];
 
-const WholesaleProducts = () => {
-  const buildWaUrl = (msg: string) =>
-    `https://wa.me/${WHOLESALE_PHONE}?text=${encodeURIComponent(msg)}`;
+const scrollToForm = () => {
+  const el = document.getElementById("formularios");
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+};
 
+const WholesaleProducts = () => {
   return (
     <section className="section-padding bg-muted/30">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -34,7 +32,7 @@ const WholesaleProducts = () => {
           Presentaciones para Emprendedores y Distribuidores
         </h2>
         <p className="text-center text-muted-foreground mb-8 md:mb-12 max-w-2xl mx-auto">
-          ¿Quieres revender o distribuir Aromix Citronela? Solicita tu lista de precios al mayor.
+          ¿Quieres revender o distribuir Aromix Citronela? Llena el formulario y te enviaremos tu cotización al mayor.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
           {wholesaleProducts.map((p) => (
@@ -59,12 +57,11 @@ const WholesaleProducts = () => {
                 <h3 className="font-heading text-lg md:text-xl font-bold text-foreground">{p.name}</h3>
                 <p className="text-muted-foreground text-sm">{p.description}</p>
                 <Button
-                  asChild
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold rounded-full"
+                  type="button"
+                  onClick={scrollToForm}
+                  className="w-full bg-primary hover:bg-citric-dark text-primary-foreground font-semibold rounded-full"
                 >
-                  <a href={buildWaUrl(p.waMessage)} target="_blank" rel="noopener noreferrer">
-                    <MessageCircle className="mr-2 h-4 w-4" /> Pedir por WhatsApp
-                  </a>
+                  <FileText className="mr-2 h-4 w-4" /> Solicitar cotización
                 </Button>
               </div>
             </div>
