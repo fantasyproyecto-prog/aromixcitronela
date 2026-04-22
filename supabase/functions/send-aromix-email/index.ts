@@ -69,7 +69,12 @@ function buildHtml(type: string, data: Record<string, any>): { subject: string; 
         ${row("Teléfono", e("phone"))}
         ${row("Dirección", e("address"))}
         ${shippingRow}
-        ${row("Referencia Pago Móvil", e("reference"))}
+      </table>
+      <h3 style="margin:32px 0 12px;color:${BRAND_DARK};font-size:16px;">💳 Datos del Pago Móvil</h3>
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f0f7e6;border-radius:8px;padding:8px 16px;">
+        ${row("Banco emisor", e("bank"))}
+        ${row("Referencia", e("reference"))}
+        ${row("Fecha del pago", e("paymentDate"))}
       </table>
       <h3 style="margin:32px 0 12px;color:${BRAND_DARK};font-size:16px;">Detalle del pedido</h3>
       <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eef1e6;border-bottom:2px solid ${BRAND_GREEN};">
@@ -77,7 +82,40 @@ function buildHtml(type: string, data: Record<string, any>): { subject: string; 
         <tr><td style="padding:16px 0 4px;color:${BRAND_DARK};font-size:16px;font-weight:700;">TOTAL</td><td align="right" style="padding:16px 0 4px;color:${BRAND_GREEN};font-size:20px;font-weight:700;">${e("total")}</td></tr>
       </table>
       ${receipt}`;
-    return { subject: `🛒 Nuevo pedido — ${data.name}${isOther ? " (Envío Otro ⚠️)" : ""}`, html: layout("Nuevo Pedido", body) };
+    return { subject: `🛒 Nuevo pedido Pago Móvil — ${data.name}${isOther ? " (Envío Otro ⚠️)" : ""}`, html: layout("Nuevo Pedido — Pago Móvil", body) };
+  }
+
+  if (type === "customer_pago_movil") {
+    const itemsHtml = Array.isArray(data.items)
+      ? data.items.map((i: any) =>
+          `<tr><td style="padding:8px 0;color:#2d3a1a;font-size:14px;">${escapeHtml(i.name)} × ${i.qty}</td><td align="right" style="padding:8px 0;color:#2d3a1a;font-size:14px;font-weight:600;">$${Number(i.price * i.qty).toFixed(2)}</td></tr>`
+        ).join("")
+      : "";
+    const body = `
+      <h2 style="margin:0 0 8px;color:${BRAND_DARK};font-size:22px;">¡Gracias por tu pedido, ${e("name")}!</h2>
+      <p style="margin:0 0 16px;color:#2d3a1a;font-size:15px;line-height:1.6;">
+        Hemos recibido tu pedido y los datos de tu transferencia. <strong>Estamos validando el pago</strong> y uno de nuestros vendedores te contactará a la brevedad posible para coordinar la entrega.
+      </p>
+      <div style="background:#fffbeb;border-left:4px solid #f59e0b;padding:12px 16px;border-radius:6px;margin:16px 0 24px;">
+        <p style="margin:0;color:#92400e;font-size:13px;">⏳ Tu pedido está <strong>pendiente de validación</strong>. Te avisaremos en cuanto confirmemos el pago en el banco.</p>
+      </div>
+      <h3 style="margin:24px 0 12px;color:${BRAND_DARK};font-size:16px;">Datos del pago reportado</h3>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        ${row("Banco emisor", e("bank"))}
+        ${row("Referencia", e("reference"))}
+        ${row("Fecha del pago", e("paymentDate"))}
+      </table>
+      <h3 style="margin:32px 0 12px;color:${BRAND_DARK};font-size:16px;">Resumen del pedido</h3>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        ${row("Envío", e("shipping"))}
+        ${row("Dirección", e("address"))}
+      </table>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eef1e6;border-bottom:2px solid ${BRAND_GREEN};margin-top:12px;">
+        ${itemsHtml}
+        <tr><td style="padding:16px 0 4px;color:${BRAND_DARK};font-size:16px;font-weight:700;">TOTAL</td><td align="right" style="padding:16px 0 4px;color:${BRAND_GREEN};font-size:20px;font-weight:700;">${e("total")}</td></tr>
+      </table>
+      <p style="margin:24px 0 0;color:#6b7758;font-size:13px;">Si tienes alguna duda, responde a este correo.</p>`;
+    return { subject: `✅ Recibimos tu pedido — Validando pago`, html: layout("Pedido Recibido", body) };
   }
 
   if (type === "emprendedor") {
