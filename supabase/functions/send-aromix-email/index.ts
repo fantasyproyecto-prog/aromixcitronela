@@ -114,6 +114,45 @@ function buildHtml(type: string, data: Record<string, any>): { subject: string; 
     return { subject: `🤝 Nueva solicitud de Distribuidor — ${data.company}`, html: layout("Solicitud de Distribuidor", body) };
   }
 
+  if (type === "mayorista") {
+    const body = `
+      <h2 style="margin:0 0 8px;color:${BRAND_DARK};font-size:22px;">Solicitud de Cotización al Mayor</h2>
+      <p style="margin:0 0 24px;color:#6b7758;font-size:14px;">Un interesado quiere cotizar producto al mayor.</p>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        ${row("Nombre / Empresa", e("name"))}
+        ${row("Email", e("email"))}
+        ${row("Teléfono", e("phone"))}
+        ${row("Ciudad / País", e("location"))}
+        ${row("Presentación de interés", e("product"))}
+        ${row("Cantidad estimada", e("quantity"))}
+        ${row("Mensaje", e("message"))}
+      </table>`;
+    return { subject: `📦 Nueva cotización al Mayor — ${data.name}`, html: layout("Cotización al Mayor", body) };
+  }
+
+  if (type === "customer_checkout") {
+    const itemsHtml = Array.isArray(data.items)
+      ? data.items.map((i: any) =>
+          `<tr><td style="padding:8px 0;color:#2d3a1a;font-size:14px;">${escapeHtml(i.name)} × ${i.qty}</td><td align="right" style="padding:8px 0;color:#2d3a1a;font-size:14px;font-weight:600;">$${Number(i.price * i.qty).toFixed(2)}</td></tr>`
+        ).join("")
+      : "";
+    const body = `
+      <h2 style="margin:0 0 8px;color:${BRAND_DARK};font-size:22px;">¡Gracias por tu compra, ${e("name")}!</h2>
+      <p style="margin:0 0 24px;color:#6b7758;font-size:14px;">Hemos recibido tu pedido con éxito. Aquí tienes el resumen:</p>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        ${row("Método de pago", e("paymentMethod"))}
+        ${row("Envío", e("shipping"))}
+        ${row("Dirección", e("address"))}
+      </table>
+      <h3 style="margin:32px 0 12px;color:${BRAND_DARK};font-size:16px;">Detalle del pedido</h3>
+      <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eef1e6;border-bottom:2px solid ${BRAND_GREEN};">
+        ${itemsHtml}
+        <tr><td style="padding:16px 0 4px;color:${BRAND_DARK};font-size:16px;font-weight:700;">TOTAL</td><td align="right" style="padding:16px 0 4px;color:${BRAND_GREEN};font-size:20px;font-weight:700;">${e("total")}</td></tr>
+      </table>
+      <p style="margin:24px 0 0;color:#6b7758;font-size:14px;">Pronto coordinaremos el despacho contigo. Si tienes alguna duda, responde a este correo.</p>`;
+    return { subject: `✅ Confirmación de tu pedido — Aromix Citronela`, html: layout("Confirmación de Pedido", body) };
+  }
+
   throw new Error(`Tipo de correo desconocido: ${type}`);
 }
 
@@ -139,7 +178,7 @@ Deno.serve(async (req) => {
   try {
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY no configurada");
 
-    const { type, data, replyTo, receiptPath } = await req.json();
+    const { type, data, replyTo, receiptPath, to } = await req.json();
     if (!type || !data) {
       return new Response(JSON.stringify({ error: "type y data son requeridos" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -167,12 +206,13 @@ Deno.serve(async (req) => {
     }
 
     const { subject, html } = buildHtml(type, data);
+    const recipients = Array.isArray(to) ? to : (to ? [to] : [DEFAULT_TO]);
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: FROM, to: [TO], subject, html,
+        from: FROM, to: recipients, subject, html,
         ...(replyTo ? { reply_to: replyTo } : {}),
         ...(attachments ? { attachments } : {}),
       }),
