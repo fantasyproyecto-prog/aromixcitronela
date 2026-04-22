@@ -169,10 +169,39 @@ const DistributorForms = () => {
             </div>
           ) : (
             <>
-              <div className="flex gap-2 p-1.5 bg-muted rounded-full mb-8">
+              <div className="flex flex-wrap gap-2 p-1.5 bg-muted rounded-full mb-8">
+                <button className={tabClass("mayorista")} onClick={() => setTab("mayorista")}>Cotizar al mayor</button>
                 <button className={tabClass("emprender")} onClick={() => setTab("emprender")}>Quiero emprender</button>
-                <button className={tabClass("empresa")} onClick={() => setTab("empresa")}>Tengo una empresa distribuidora</button>
+                <button className={tabClass("empresa")} onClick={() => setTab("empresa")}>Empresa distribuidora</button>
               </div>
+
+              {tab === "mayorista" && (
+                <form onSubmit={handleSubmitMayorista} className="space-y-4">
+                  <input type="text" name="company_website" tabIndex={-1} autoComplete="off" className="opacity-0 absolute -z-10 w-0 h-0" />
+                  <div><Label htmlFor="m-nombre">Nombre o empresa</Label><Input id="m-nombre" name="m-nombre" required /></div>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div><Label htmlFor="m-tel">Teléfono / WhatsApp</Label><Input id="m-tel" name="m-tel" type="tel" required /></div>
+                    <div><Label htmlFor="m-email">Email</Label><Input id="m-email" name="m-email" type="email" required /></div>
+                  </div>
+                  <div><Label htmlFor="m-ubicacion">Ciudad / País</Label><Input id="m-ubicacion" name="m-ubicacion" required /></div>
+                  <div>
+                    <Label>Presentación de interés</Label>
+                    <Select name="m-producto" required>
+                      <SelectTrigger><SelectValue placeholder="Selecciona una presentación" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Caja de 12 unidades">Caja de 12 unidades</SelectItem>
+                        <SelectItem value="Caja Master de 72 unidades">Caja Master de 72 unidades</SelectItem>
+                        <SelectItem value="Ambas">Ambas presentaciones</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div><Label htmlFor="m-cantidad">Cantidad estimada (cajas)</Label><Input id="m-cantidad" name="m-cantidad" placeholder="Ej: 10 cajas" required /></div>
+                  <div><Label htmlFor="m-mensaje">Mensaje (opcional)</Label><Input id="m-mensaje" name="m-mensaje" /></div>
+                  <Button type="submit" disabled={sending} className="w-full bg-primary hover:bg-citric-dark text-primary-foreground font-semibold rounded-full disabled:opacity-50" size="lg">
+                    {sending ? "Enviando..." : "Solicitar cotización al mayor"}
+                  </Button>
+                </form>
+              )}
 
               {tab === "emprender" && (
                 <form onSubmit={handleSubmitEmprender} className="space-y-4">
