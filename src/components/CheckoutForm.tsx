@@ -176,7 +176,73 @@ const CheckoutForm = () => {
     }
   };
 
-  const handleClose = (open: boolean) => {
+  const buildShippingPayload = () => {
+    const shipping_summary = isOtro
+      ? `Envío por: ${otroEmpresa.trim()} - Estado: ${otroEstado.trim()} - Dirección: ${otroDireccion.trim()}`
+      : isMRW
+        ? `MRW - ${officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})` : selectedOffice}`
+        : `${courier} - Estado: ${otroEstado.trim()} - Sede: ${otroDireccion.trim()}`;
+    return {
+      courier,
+      summary: shipping_summary,
+      state: isMRW ? selectedEstado : (isOtro ? otroEstado.trim() : otroEstado.trim()),
+      office: isMRW ? selectedOffice : (isOtro ? undefined : otroDireccion.trim()),
+      other: isOtro ? { company: otroEmpresa.trim(), state: otroEstado.trim(), address: otroDireccion.trim() } : null,
+    };
+  };
+
+  const validateShipping = () => {
+    if (!courier) { toast.error("Selecciona la empresa de envío (courier)"); return false; }
+    if (isOtro) {
+      if (!otroEmpresa.trim() || !otroEstado.trim() || !otroDireccion.trim()) { toast.error("Completa los campos de la empresa de envío"); return false; }
+    } else if (isMRW) {
+      if (!selectedOffice) { toast.error("Selecciona la sede de MRW"); return false; }
+    } else {
+      if (!otroEstado.trim() || !otroDireccion.trim()) { toast.error(`Indica el estado y la sede de ${courier}`); return false; }
+    }
+    return true;
+  };
+
+  const handleStripeSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const data = new FormData(form);
+    if (data.get("website_url")) { toast.success("¡Pedido confirmado!"); return; }
+
+    if (!stripeCustomer.name || !stripeCustomer.email || !stripeCustomer.phone || !stripeCustomer.address) {
+      toast.error("Completa todos los datos de envío");
+      return;
+    }
+    if (!validateShipping()) return;
+
+    setStripeLoading(true);
+    try {
+      const shipping = buildShippingPayload();
+      const successUrl = `${window.location.origin}/?stripe=success`;
+      const cancelUrl = `${window.location.origin}/?stripe=cancel`;
+
+      const { data: resp, error } = await supabase.functions.invoke("create-stripe-checkout", {
+        body: {
+          customer: stripeCustomer,
+          shipping,
+          items: items.map((i) => ({ id: i.id, name: i.name, priceUSD: i.priceUSD, quantity: i.quantity, image: i.image })),
+          successUrl,
+          cancelUrl,
+        },
+      });
+      if (error) throw error;
+      if (!resp?.url) throw new Error("Stripe no devolvió URL de checkout");
+
+      window.location.href = resp.url;
+    } catch (err) {
+      console.error("Stripe checkout error:", err);
+      const msg = err instanceof Error ? err.message : "Error iniciando el pago con tarjeta";
+      toast.error(msg);
+      setStripeLoading(false);
+    }
+  };
+
+
     setIsCheckoutOpen(open);
     if (!open) {
       setSuccess(false);
