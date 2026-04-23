@@ -10,10 +10,21 @@ import { supabase } from "@/integrations/supabase/client";
 const RATE_LIMIT_KEY = "aromix_dist_last_send";
 const RATE_LIMIT_MS = 5 * 60 * 1000;
 
+type WholesaleTab = "mayorista" | "emprender" | "empresa";
+type WholesaleOrigin = "Cotizar al mayor" | "Quiero emprender" | "Empresa distribuidora";
+
+interface LeadField {
+  label: string;
+  value: string;
+}
+
 const DistributorForms = () => {
-  const [tab, setTab] = useState<"mayorista" | "emprender" | "empresa">("mayorista");
+  const [tab, setTab] = useState<WholesaleTab>("mayorista");
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [mayoristaProducto, setMayoristaProducto] = useState("");
+  const [emprenderInversion, setEmprenderInversion] = useState("");
+  const [empresaSimilar, setEmpresaSimilar] = useState("");
 
   const checkRateLimit = (): boolean => {
     const lastSend = sessionStorage.getItem(RATE_LIMIT_KEY);
@@ -24,38 +35,38 @@ const DistributorForms = () => {
     return true;
   };
 
-  const handleSubmitMayorista = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const data = new FormData(form);
-
-    if (data.get("company_website")) {
-      toast.success("¡Solicitud enviada con éxito!");
-      return;
-    }
+  const submitWholesaleLead = async ({
+    formOrigin,
+    replyTo,
+    fields,
+    successMessage,
+  }: {
+    formOrigin: WholesaleOrigin;
+    replyTo: string;
+    fields: LeadField[];
+    successMessage: string;
+  }) => {
     if (!checkRateLimit()) return;
 
     setSending(true);
     try {
-      const nombre = String(data.get("m-nombre") ?? "");
-      const email = String(data.get("m-email") ?? "");
-      const telefono = String(data.get("m-tel") ?? "");
-      const ubicacion = String(data.get("m-ubicacion") ?? "");
-      const producto = String(data.get("m-producto") ?? "");
-      const cantidad = String(data.get("m-cantidad") ?? "");
-      const mensaje = String(data.get("m-mensaje") ?? "");
-
-      const { error } = await supabase.functions.invoke("send-aromix-email", {
+      const { data: response, error } = await supabase.functions.invoke("send-aromix-email", {
         body: {
-          type: "mayorista",
-          replyTo: email,
-          data: { name: nombre, email, phone: telefono, location: ubicacion, product: producto, quantity: cantidad, message: mensaje },
+          type: "wholesale_lead",
+          replyTo,
+          data: {
+            formOrigin,
+            fields,
+          },
         },
       });
-      if (error) throw error;
+
+      if (error || !response?.ok) {
+        throw error ?? new Error("El backend no confirmó el envío del correo");
+      }
 
       sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
-      toast.success("¡Cotización solicitada! Te contactaremos pronto.");
+      toast.success(successMessage);
       setSuccess(true);
     } catch (err) {
       console.error(err);
@@ -63,6 +74,41 @@ const DistributorForms = () => {
     } finally {
       setSending(false);
     }
+  };
+
+  const handleSubmitMayorista = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.target as HTMLFormElement;
+    const data = new FormData(form);
+
+    if (data.get("company_website")) return;
+
+    if (!mayoristaProducto) {
+      toast.error("Selecciona una presentación de interés.");
+      return;
+    }
+
+    const nombre = String(data.get("m-nombre") ?? "");
+    const email = String(data.get("m-email") ?? "");
+    const telefono = String(data.get("m-tel") ?? "");
+    const ubicacion = String(data.get("m-ubicacion") ?? "");
+    const cantidad = String(data.get("m-cantidad") ?? "");
+    const mensaje = String(data.get("m-mensaje") ?? "");
+
+    await submitWholesaleLead({
+      formOrigin: "Cotizar al mayor",
+      replyTo: email,
+      successMessage: "¡Cotización solicitada! Te contactaremos pronto.",
+      fields: [
+        { label: "Nombre o empresa", value: nombre },
+        { label: "Email", value: email },
+        { label: "Teléfono / WhatsApp", value: telefono },
+        { label: "Ciudad / País", value: ubicacion },
+        { label: "Presentación de interés", value: mayoristaProducto },
+        { label: "Cantidad estimada", value: cantidad },
+        { label: "Mensaje", value: mensaje || "Sin mensaje adicional" },
+      ],
+    });
   };
 
   const handleSubmitEmprender = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -70,39 +116,32 @@ const DistributorForms = () => {
     const form = e.target as HTMLFormElement;
     const data = new FormData(form);
 
-    if (data.get("company_website")) {
-      toast.success("¡Solicitud enviada con éxito!");
+    if (data.get("company_website")) return;
+
+    if (!emprenderInversion) {
+      toast.error("Selecciona un monto de inversión.");
       return;
     }
-    if (!checkRateLimit()) return;
 
-    setSending(true);
-    try {
-      const nombre = String(data.get("e-nombre") ?? "");
-      const zona = String(data.get("e-zona") ?? "");
-      const inversion = String(data.get("e-inversion") ?? "");
-      const direccion = String(data.get("e-dir") ?? "");
-      const telefono = String(data.get("e-tel") ?? "");
-      const email = String(data.get("e-email") ?? "");
+    const nombre = String(data.get("e-nombre") ?? "");
+    const zona = String(data.get("e-zona") ?? "");
+    const direccion = String(data.get("e-dir") ?? "");
+    const telefono = String(data.get("e-tel") ?? "");
+    const email = String(data.get("e-email") ?? "");
 
-      const { error } = await supabase.functions.invoke("send-aromix-email", {
-        body: {
-          type: "emprendedor",
-          replyTo: email,
-          data: { name: nombre, email, phone: telefono, address: direccion, zone: zona, investment: inversion },
-        },
-      });
-      if (error) throw error;
-
-      sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
-      toast.success("¡Solicitud enviada con éxito! Nos pondremos en contacto contigo pronto.");
-      setSuccess(true);
-    } catch (err) {
-      console.error(err);
-      toast.error("Error al enviar. Por favor, intenta de nuevo.");
-    } finally {
-      setSending(false);
-    }
+    await submitWholesaleLead({
+      formOrigin: "Quiero emprender",
+      replyTo: email,
+      successMessage: "¡Solicitud enviada con éxito! Nos pondremos en contacto contigo pronto.",
+      fields: [
+        { label: "Nombre completo", value: nombre },
+        { label: "Email", value: email },
+        { label: "Teléfono", value: telefono },
+        { label: "Dirección", value: direccion },
+        { label: "Zona donde se encuentra", value: zona },
+        { label: "Monto de inversión", value: emprenderInversion },
+      ],
+    });
   };
 
   const handleSubmitEmpresa = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -110,50 +149,39 @@ const DistributorForms = () => {
     const form = e.target as HTMLFormElement;
     const data = new FormData(form);
 
-    if (data.get("company_website")) {
-      toast.success("¡Información recibida!");
-      return;
-    }
-    if (!checkRateLimit()) return;
+    if (data.get("company_website")) return;
 
-    setSending(true);
-    try {
-      const nombre = String(data.get("d-nombre") ?? "");
-      const empresa = String(data.get("d-empresa") ?? "");
-      const rif = String(data.get("d-rif") ?? "");
-      const telefono = String(data.get("d-tel") ?? "");
-      const email = String(data.get("d-email") ?? "");
-      const direccion = String(data.get("d-dir") ?? "");
-      const segmento = String(data.get("d-segmento") ?? "");
-      const fuerza = String(data.get("d-fuerza") ?? "");
-      const similar = String(data.get("d-similar") ?? "No especificado");
-      const detalle = String(data.get("d-detalle") ?? "Sin detalles adicionales");
+    const nombre = String(data.get("d-nombre") ?? "");
+    const empresa = String(data.get("d-empresa") ?? "");
+    const rif = String(data.get("d-rif") ?? "");
+    const telefono = String(data.get("d-tel") ?? "");
+    const email = String(data.get("d-email") ?? "");
+    const direccion = String(data.get("d-dir") ?? "");
+    const segmento = String(data.get("d-segmento") ?? "");
+    const fuerza = String(data.get("d-fuerza") ?? "");
+    const detalle = String(data.get("d-detalle") ?? "");
 
-      const { error } = await supabase.functions.invoke("send-aromix-email", {
-        body: {
-          type: "distribuidor",
-          replyTo: email,
-          data: {
-            name: nombre, company: empresa, rif, phone: telefono, email,
-            address: direccion, segment: segmento, salesforce: fuerza, similar, detail: detalle,
-          },
-        },
-      });
-      if (error) throw error;
-
-      sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
-      toast.success("¡Información recibida! Nuestro equipo revisará tu solicitud.");
-      setSuccess(true);
-    } catch (err) {
-      console.error(err);
-      toast.error("Error al enviar. Por favor, intenta de nuevo.");
-    } finally {
-      setSending(false);
-    }
+    await submitWholesaleLead({
+      formOrigin: "Empresa distribuidora",
+      replyTo: email,
+      successMessage: "¡Información recibida! Nuestro equipo revisará tu solicitud.",
+      fields: [
+        { label: "Nombre completo", value: nombre },
+        { label: "Empresa", value: empresa },
+        { label: "RIF", value: rif },
+        { label: "Email", value: email },
+        { label: "Teléfono", value: telefono },
+        { label: "Dirección", value: direccion },
+        { label: "Segmento o rubro", value: segmento },
+        { label: "Fuerza de ventas", value: fuerza },
+        { label: "¿Ha comercializado un producto similar?", value: empresaSimilar || "No especificado" },
+        { label: "Detalle", value: detalle || "Sin detalles adicionales" },
+      ],
+    });
   };
 
-  const tabClass = (t: string) =>
-    `flex-1 py-3 px-6 text-sm font-semibold rounded-full transition-all ${tab === t ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:text-foreground"}`;
+  const tabClass = (selectedTab: WholesaleTab) =>
+    `flex-1 py-3 px-6 text-sm font-semibold rounded-full transition-all ${tab === selectedTab ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:text-foreground"}`;
 
   return (
     <section id="formularios" className="section-padding">
@@ -170,9 +198,9 @@ const DistributorForms = () => {
           ) : (
             <>
               <div className="flex flex-wrap gap-2 p-1.5 bg-muted rounded-full mb-8">
-                <button className={tabClass("mayorista")} onClick={() => setTab("mayorista")}>Cotizar al mayor</button>
-                <button className={tabClass("emprender")} onClick={() => setTab("emprender")}>Quiero emprender</button>
-                <button className={tabClass("empresa")} onClick={() => setTab("empresa")}>Empresa distribuidora</button>
+                <button type="button" className={tabClass("mayorista")} onClick={() => setTab("mayorista")}>Cotizar al mayor</button>
+                <button type="button" className={tabClass("emprender")} onClick={() => setTab("emprender")}>Quiero emprender</button>
+                <button type="button" className={tabClass("empresa")} onClick={() => setTab("empresa")}>Empresa distribuidora</button>
               </div>
 
               {tab === "mayorista" && (
@@ -186,7 +214,7 @@ const DistributorForms = () => {
                   <div><Label htmlFor="m-ubicacion">Ciudad / País</Label><Input id="m-ubicacion" name="m-ubicacion" required /></div>
                   <div>
                     <Label>Presentación de interés</Label>
-                    <Select name="m-producto" required>
+                    <Select value={mayoristaProducto} onValueChange={setMayoristaProducto}>
                       <SelectTrigger><SelectValue placeholder="Selecciona una presentación" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="Caja de 12 unidades">Caja de 12 unidades</SelectItem>
@@ -215,12 +243,12 @@ const DistributorForms = () => {
                   <div><Label htmlFor="e-zona">Zona donde se encuentra</Label><Input id="e-zona" name="e-zona" required /></div>
                   <div>
                     <Label>Monto que estás dispuesto a invertir</Label>
-                    <Select name="e-inversion" required>
+                    <Select value={emprenderInversion} onValueChange={setEmprenderInversion}>
                       <SelectTrigger><SelectValue placeholder="Selecciona un rango" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="200-600">$200 - $600</SelectItem>
-                        <SelectItem value="600-1000">$600 - $1,000</SelectItem>
-                        <SelectItem value="1500+">Más de $1,500</SelectItem>
+                        <SelectItem value="$200 - $600">$200 - $600</SelectItem>
+                        <SelectItem value="$600 - $1,000">$600 - $1,000</SelectItem>
+                        <SelectItem value="Más de $1,500">Más de $1,500</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -247,11 +275,11 @@ const DistributorForms = () => {
                   <div><Label htmlFor="d-fuerza">Fuerza de ventas (cantidad de vendedores)</Label><Input id="d-fuerza" name="d-fuerza" type="number" required /></div>
                   <div>
                     <Label>¿Ha comercializado un producto similar?</Label>
-                    <Select name="d-similar">
+                    <Select value={empresaSimilar} onValueChange={setEmpresaSimilar}>
                       <SelectTrigger><SelectValue placeholder="Selecciona" /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="si">Sí</SelectItem>
-                        <SelectItem value="no">No</SelectItem>
+                        <SelectItem value="Sí">Sí</SelectItem>
+                        <SelectItem value="No">No</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

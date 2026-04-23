@@ -78,6 +78,15 @@ Deno.serve(async (req) => {
   }
 
   const totalAmount = body.items.reduce((s, i) => s + i.priceUSD * i.quantity, 0);
+  let successUrl: string;
+
+  try {
+    const parsedSuccessUrl = new URL(body.successUrl);
+    parsedSuccessUrl.searchParams.set("session_id", "{CHECKOUT_SESSION_ID}");
+    successUrl = parsedSuccessUrl.toString();
+  } catch {
+    return bad(400, "URL de éxito inválida");
+  }
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false },
@@ -147,7 +156,7 @@ Deno.serve(async (req) => {
         shipping_other_state: (body.shipping.other?.state ?? "").slice(0, 500),
         shipping_other_address: (body.shipping.other?.address ?? "").slice(0, 500),
       },
-      success_url: `${body.successUrl}?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: successUrl,
       cancel_url: body.cancelUrl,
     });
 
