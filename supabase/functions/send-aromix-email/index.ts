@@ -118,6 +118,20 @@ function buildHtml(type: string, data: Record<string, any>): { subject: string; 
     return { subject: `✅ Recibimos tu pedido — Validando pago`, html: layout("Pedido Recibido", body) };
   }
 
+  if (type === "wholesale_lead") {
+    const fieldsHtml = Array.isArray(data.fields)
+      ? data.fields.map((field: any) => row(escapeHtml(field?.label ?? "Campo"), escapeHtml(field?.value ?? ""))).join("")
+      : "";
+    const body = `
+      <h2 style="margin:0 0 8px;color:${BRAND_DARK};font-size:22px;">Nueva solicitud desde Ventas al Mayor</h2>
+      <p style="margin:0 0 24px;color:#6b7758;font-size:14px;">Se recibió un nuevo formulario de contacto comercial.</p>
+      <table width="100%" cellpadding="0" cellspacing="0">
+        ${row("Origen del Formulario", e("formOrigin"))}
+        ${fieldsHtml}
+      </table>`;
+    return { subject: `📨 ${data.formOrigin ?? "Nueva solicitud comercial"} — Aromix Citronela`, html: layout("Solicitud Comercial", body) };
+  }
+
   if (type === "emprendedor") {
     const body = `
       <h2 style="margin:0 0 8px;color:${BRAND_DARK};font-size:22px;">Solicitud de Emprendimiento</h2>
