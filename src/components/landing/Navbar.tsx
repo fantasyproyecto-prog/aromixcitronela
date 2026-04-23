@@ -16,12 +16,12 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-background/90 backdrop-blur-md border-b">
-      <div className="container mx-auto flex items-center justify-between h-16 px-4">
+      <div className="container mx-auto flex items-center justify-between h-24 md:h-28 px-4">
         <a href="#hero" aria-label="Inicio Aromix Citronela" className="flex items-center bg-transparent">
           <img
             src={aromixLogo}
             alt="Aromix Citronela"
-            className="h-16 w-auto md:h-20 object-contain"
+            className="h-20 w-auto md:h-28 object-contain"
           />
         </a>
 
