@@ -27,7 +27,7 @@ const Navbar = () => {
 
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((l) => (
-            <a key={l.href} href={l.href} className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+            <a key={l.href} href={l.href} className="text-lg font-semibold text-foreground hover:text-primary transition-colors">
               {l.label}
             </a>
           ))}
@@ -51,7 +51,7 @@ const Navbar = () => {
       {mobileOpen && (
         <div className="md:hidden bg-background border-t px-4 py-4 space-y-3">
           {navLinks.map((l) => (
-            <a key={l.href} href={l.href} onClick={() => setMobileOpen(false)} className="block text-sm font-medium text-muted-foreground hover:text-primary">
+            <a key={l.href} href={l.href} onClick={() => setMobileOpen(false)} className="block text-lg font-semibold text-foreground hover:text-primary">
               {l.label}
             </a>
           ))}
