@@ -1,7 +1,7 @@
 import dispensadorImg from "@/assets/dispensador-sa2000.png";
 
 const Solution = () => (
-  <section className="section-padding bg-lime-50">
+  <section className="section-padding bg-primary">
     <div className="max-w-7xl mx-auto grid items-center gap-8 bg-transparent px-4 sm:px-6 md:grid-cols-2 md:gap-12 lg:px-8">
       <div className="bg-transparent p-0 m-0 border-none shadow-none flex justify-center">
         <img
@@ -10,16 +10,16 @@ const Solution = () => (
           loading="lazy"
           width={400}
           height={400}
-          className="w-full max-w-md mx-auto h-auto object-contain"
+          className="w-full max-w-md mx-auto h-auto object-contain drop-shadow-2xl"
         />
       </div>
       <div className="space-y-5">
-        <span className="text-sm font-semibold text-primary uppercase tracking-wider">La solución</span>
-        <h2 className="text-2xl md:text-4xl font-bold text-foreground">La solución automática</h2>
-        <p className="text-base md:text-lg text-muted-foreground leading-relaxed">
+        <span className="text-sm font-semibold text-primary-foreground/80 uppercase tracking-wider">La solución</span>
+        <h2 className="text-2xl md:text-4xl font-bold text-primary-foreground">La solución automática</h2>
+        <p className="text-base md:text-lg text-primary-foreground/90 leading-relaxed">
           Aromix Citronela es un sistema automático que libera una fórmula natural repelente en intervalos programados, manteniendo tu espacio protegido durante todo el día sin esfuerzo.
         </p>
-        <p className="text-muted-foreground leading-relaxed">
+        <p className="text-primary-foreground/80 leading-relaxed">
           Olvídate de soluciones manuales y mantén un ambiente limpio de forma continua.
         </p>
       </div>
