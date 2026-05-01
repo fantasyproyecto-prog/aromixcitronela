@@ -115,6 +115,7 @@ const DistributorForms = () => {
     const mensaje = String(data.get("m-mensaje") ?? "");
 
     await submitWholesaleLead({
+      rateLimitKey: "mayorista",
       formOrigin: "Cotizar al mayor",
       replyTo: email,
       successMessage: "¡Cotización solicitada! Te contactaremos pronto.",
