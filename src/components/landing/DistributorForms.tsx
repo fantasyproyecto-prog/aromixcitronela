@@ -8,7 +8,7 @@ import { CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const RATE_LIMIT_KEY = "aromix_dist_last_send";
-const RATE_LIMIT_MS = 5 * 60 * 1000;
+const RATE_LIMIT_MS = 30 * 1000;
 
 type WholesaleTab = "mayorista" | "emprender" | "empresa";
 type WholesaleOrigin = "Cotizar al mayor" | "Quiero emprender" | "Empresa distribuidora";
