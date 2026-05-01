@@ -25,7 +25,7 @@ const Navbar = () => {
           <img
             src={aromixLogo}
             alt="Aromix Citronela"
-            className="h-8 md:h-10 w-auto object-contain block"
+            className="h-14 md:h-20 w-auto object-contain block -mt-1"
           />
         </a>
 
