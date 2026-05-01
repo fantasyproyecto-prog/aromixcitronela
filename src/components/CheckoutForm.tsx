@@ -389,6 +389,9 @@ const CheckoutForm = () => {
       setStripeCedulaTipo("V");
       setCustomOfficeText("");
       setStripeCustomer({ name: "", email: "", phone: "", address: "", cedula: "" });
+      setPaypalCustomer({ name: "", email: "", phone: "", address: "", cedula: "" });
+      setPaypalCedulaTipo("V");
+      setPaypalDataReady(false);
       removeReceipt();
     }
   };
