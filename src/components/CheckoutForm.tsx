@@ -122,8 +122,8 @@ const CheckoutForm = () => {
         return;
       }
     }
-    if (!cedula.trim()) {
-      toast.error("Indica tu cédula de identidad (la solicitan las empresas de envío)");
+    if (!isValidCedulaNumber(cedula.trim())) {
+      toast.error("Cédula inválida. Debe tener entre 6 y 9 dígitos (ej: V-12345678)");
       return;
     }
     if (!receiptFile) {
