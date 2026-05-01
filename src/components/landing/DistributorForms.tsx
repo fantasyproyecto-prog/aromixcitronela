@@ -24,9 +24,13 @@ interface LeadField {
 const DistributorForms = () => {
   const [tab, setTab] = useState<WholesaleTab>("mayorista");
   const [sending, setSending] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [successMap, setSuccessMap] = useState<Record<WholesaleTab, boolean>>({
+    mayorista: false,
+    emprender: false,
+  });
   const [mayoristaProducto, setMayoristaProducto] = useState("");
   const [emprenderInversion, setEmprenderInversion] = useState("");
+  const success = successMap[tab];
 
   useEffect(() => {
     const applyHash = () => {
