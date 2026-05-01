@@ -24,7 +24,21 @@ const DistributorForms = () => {
   const [success, setSuccess] = useState(false);
   const [mayoristaProducto, setMayoristaProducto] = useState("");
   const [emprenderInversion, setEmprenderInversion] = useState("");
-  const [empresaSimilar, setEmpresaSimilar] = useState("");
+
+  useEffect(() => {
+    const applyHash = () => {
+      if (window.location.hash === "#formularios-mayorista") {
+        setTab("mayorista");
+        document.getElementById("formularios")?.scrollIntoView({ behavior: "smooth" });
+      } else if (window.location.hash === "#formularios-emprender") {
+        setTab("emprender");
+        document.getElementById("formularios")?.scrollIntoView({ behavior: "smooth" });
+      }
+    };
+    applyHash();
+    window.addEventListener("hashchange", applyHash);
+    return () => window.removeEventListener("hashchange", applyHash);
+  }, []);
 
   const checkRateLimit = (): boolean => {
     const lastSend = sessionStorage.getItem(RATE_LIMIT_KEY);
