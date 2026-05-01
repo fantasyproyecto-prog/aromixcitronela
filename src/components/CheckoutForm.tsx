@@ -227,7 +227,7 @@ const CheckoutForm = () => {
                 name: nombreCliente,
                 shipping: shipping_address,
                 address: dirCliente,
-                cedula: cedula.trim(),
+                cedula: formatCedula(cedulaTipo, cedula.trim()),
                 reference: referencia,
                 bank: bancoEmisor.trim(),
                 paymentDate: fechaPago,
