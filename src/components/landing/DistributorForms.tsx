@@ -179,7 +179,6 @@ const DistributorForms = () => {
               <div className="flex flex-wrap gap-2 p-1.5 bg-muted rounded-full mb-8">
                 <button type="button" className={tabClass("mayorista")} onClick={() => setTab("mayorista")}>Cotizar al mayor</button>
                 <button type="button" className={tabClass("emprender")} onClick={() => setTab("emprender")}>Quiero emprender</button>
-                <button type="button" className={tabClass("empresa")} onClick={() => setTab("empresa")}>Empresa distribuidora</button>
               </div>
 
               {tab === "mayorista" && (
