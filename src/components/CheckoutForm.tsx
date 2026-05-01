@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +24,7 @@ const COURIER_KEY_MAP: Record<string, CourierKey> = {
 const RATE_LIMIT_KEY = "aromix_checkout_last_send";
 const RATE_LIMIT_MS = 5 * 60 * 1000;
 
-type PaymentMethod = "pago-movil" | "stripe" | null;
+type PaymentMethod = "pago-movil" | "stripe" | "paypal" | null;
 type Courier = "MRW" | "Liberty Express" | "Zoom" | "DHL" | "Otro" | "";
 const COURIERS: Exclude<Courier, "">[] = ["MRW", "Liberty Express", "Zoom", "DHL", "Otro"];
 
