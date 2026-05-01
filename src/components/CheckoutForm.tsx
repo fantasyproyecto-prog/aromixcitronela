@@ -320,7 +320,7 @@ const CheckoutForm = () => {
         body: {
           customer: {
             ...stripeCustomer,
-            address: `${stripeCustomer.address} | C.I: ${stripeCustomer.cedula.trim()}`,
+            address: `${stripeCustomer.address} | C.I: ${formatCedula(stripeCedulaTipo, stripeCustomer.cedula.trim())}`,
           },
           shipping,
           items: items.map((i) => ({ id: i.id, name: i.name, priceUSD: i.priceUSD, quantity: i.quantity, image: i.image })),
