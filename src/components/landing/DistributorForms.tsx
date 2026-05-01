@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,8 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 const RATE_LIMIT_KEY = "aromix_dist_last_send";
 const RATE_LIMIT_MS = 30 * 1000;
 
-type WholesaleTab = "mayorista" | "emprender" | "empresa";
-type WholesaleOrigin = "Cotizar al mayor" | "Quiero emprender" | "Empresa distribuidora";
+type WholesaleTab = "mayorista" | "emprender";
+type WholesaleOrigin = "Cotizar al mayor" | "Quiero emprender";
 
 interface LeadField {
   label: string;
