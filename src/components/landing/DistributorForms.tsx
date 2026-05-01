@@ -150,6 +150,7 @@ const DistributorForms = () => {
     const email = String(data.get("e-email") ?? "");
 
     await submitWholesaleLead({
+      rateLimitKey: "emprender",
       formOrigin: "Quiero emprender",
       replyTo: email,
       successMessage: "¡Cotización solicitada! Te contactaremos pronto.",
