@@ -38,10 +38,12 @@ const CheckoutForm = () => {
   const [otroDireccion, setOtroDireccion] = useState("");
   const [bancoEmisor, setBancoEmisor] = useState("");
   const [fechaPago, setFechaPago] = useState("");
+  const [cedula, setCedula] = useState("");
+  const [customOfficeText, setCustomOfficeText] = useState(""); // sede escrita manualmente
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [stripeLoading, setStripeLoading] = useState(false);
-  const [stripeCustomer, setStripeCustomer] = useState({ name: "", email: "", phone: "", address: "" });
+  const [stripeCustomer, setStripeCustomer] = useState({ name: "", email: "", phone: "", address: "", cedula: "" });
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
