@@ -24,9 +24,13 @@ interface LeadField {
 const DistributorForms = () => {
   const [tab, setTab] = useState<WholesaleTab>("mayorista");
   const [sending, setSending] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [successMap, setSuccessMap] = useState<Record<WholesaleTab, boolean>>({
+    mayorista: false,
+    emprender: false,
+  });
   const [mayoristaProducto, setMayoristaProducto] = useState("");
   const [emprenderInversion, setEmprenderInversion] = useState("");
+  const success = successMap[tab];
 
   useEffect(() => {
     const applyHash = () => {
@@ -86,7 +90,7 @@ const DistributorForms = () => {
 
       sessionStorage.setItem(RATE_LIMIT_KEYS[rateLimitKey], String(Date.now()));
       toast.success(successMessage);
-      setSuccess(true);
+      setSuccessMap((prev) => ({ ...prev, [rateLimitKey]: true }));
     } catch (err) {
       console.error(err);
       toast.error("Error al enviar. Por favor, intenta de nuevo.");
