@@ -38,11 +38,13 @@ const CheckoutForm = () => {
   const [otroDireccion, setOtroDireccion] = useState("");
   const [bancoEmisor, setBancoEmisor] = useState("");
   const [fechaPago, setFechaPago] = useState("");
-  const [cedula, setCedula] = useState("");
+  const [cedulaTipo, setCedulaTipo] = useState<"V" | "E">("V");
+  const [cedula, setCedula] = useState(""); // solo dígitos
   const [customOfficeText, setCustomOfficeText] = useState(""); // sede escrita manualmente
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeCedulaTipo, setStripeCedulaTipo] = useState<"V" | "E">("V");
   const [stripeCustomer, setStripeCustomer] = useState({ name: "", email: "", phone: "", address: "", cedula: "" });
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
