@@ -90,7 +90,7 @@ const DistributorForms = () => {
 
       sessionStorage.setItem(RATE_LIMIT_KEYS[rateLimitKey], String(Date.now()));
       toast.success(successMessage);
-      setSuccess(true);
+      setSuccessMap((prev) => ({ ...prev, [rateLimitKey]: true }));
     } catch (err) {
       console.error(err);
       toast.error("Error al enviar. Por favor, intenta de nuevo.");
