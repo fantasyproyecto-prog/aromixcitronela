@@ -235,39 +235,6 @@ const DistributorForms = () => {
                   </Button>
                 </form>
               )}
-
-
-              {tab === "empresa" && (
-                <form onSubmit={handleSubmitEmpresa} className="space-y-4">
-                  <input type="text" name="company_website" tabIndex={-1} autoComplete="off" className="opacity-0 absolute -z-10 w-0 h-0" />
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div><Label htmlFor="d-nombre">Nombre completo</Label><Input id="d-nombre" name="d-nombre" required /></div>
-                    <div><Label htmlFor="d-empresa">Nombre de la empresa</Label><Input id="d-empresa" name="d-empresa" required /></div>
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div><Label htmlFor="d-rif">RIF</Label><Input id="d-rif" name="d-rif" required /></div>
-                    <div><Label htmlFor="d-tel">Teléfono</Label><Input id="d-tel" name="d-tel" type="tel" required /></div>
-                  </div>
-                  <div><Label htmlFor="d-email">Email</Label><Input id="d-email" name="d-email" type="email" required /></div>
-                  <div><Label htmlFor="d-dir">Dirección</Label><Input id="d-dir" name="d-dir" required /></div>
-                  <div><Label htmlFor="d-segmento">Segmento o rubro</Label><Input id="d-segmento" name="d-segmento" placeholder="Retail, Food Service, etc." required /></div>
-                  <div><Label htmlFor="d-fuerza">Fuerza de ventas (cantidad de vendedores)</Label><Input id="d-fuerza" name="d-fuerza" type="number" required /></div>
-                  <div>
-                    <Label>¿Ha comercializado un producto similar?</Label>
-                    <Select value={empresaSimilar} onValueChange={setEmpresaSimilar}>
-                      <SelectTrigger><SelectValue placeholder="Selecciona" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Sí">Sí</SelectItem>
-                        <SelectItem value="No">No</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div><Label htmlFor="d-detalle">Detalle (opcional)</Label><Input id="d-detalle" name="d-detalle" /></div>
-                  <Button type="submit" disabled={sending} className="w-full bg-primary hover:bg-citric-dark text-primary-foreground font-semibold rounded-full disabled:opacity-50" size="lg">
-                    {sending ? "Procesando..." : "Enviar información"}
-                  </Button>
-                </form>
-              )}
             </>
           )}
         </div>
