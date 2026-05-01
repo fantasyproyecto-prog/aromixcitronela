@@ -7,14 +7,14 @@ import { toast } from "sonner";
 import { CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
+type WholesaleTab = "mayorista" | "emprender";
+type WholesaleOrigin = "Cotizar al mayor" | "Quiero emprender";
+
 const RATE_LIMIT_KEYS: Record<WholesaleTab, string> = {
   mayorista: "aromix_dist_last_send_mayorista",
   emprender: "aromix_dist_last_send_emprender",
 };
 const RATE_LIMIT_MS = 30 * 1000;
-
-type WholesaleTab = "mayorista" | "emprender";
-type WholesaleOrigin = "Cotizar al mayor" | "Quiero emprender";
 
 interface LeadField {
   label: string;
