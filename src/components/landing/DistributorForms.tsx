@@ -158,41 +158,6 @@ const DistributorForms = () => {
     });
   };
 
-  const handleSubmitEmpresa = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const data = new FormData(form);
-
-    if (data.get("company_website")) return;
-
-    const nombre = String(data.get("d-nombre") ?? "");
-    const empresa = String(data.get("d-empresa") ?? "");
-    const rif = String(data.get("d-rif") ?? "");
-    const telefono = String(data.get("d-tel") ?? "");
-    const email = String(data.get("d-email") ?? "");
-    const direccion = String(data.get("d-dir") ?? "");
-    const segmento = String(data.get("d-segmento") ?? "");
-    const fuerza = String(data.get("d-fuerza") ?? "");
-    const detalle = String(data.get("d-detalle") ?? "");
-
-    await submitWholesaleLead({
-      formOrigin: "Empresa distribuidora",
-      replyTo: email,
-      successMessage: "¡Información recibida! Nuestro equipo revisará tu solicitud.",
-      fields: [
-        { label: "Nombre completo", value: nombre },
-        { label: "Empresa", value: empresa },
-        { label: "RIF", value: rif },
-        { label: "Email", value: email },
-        { label: "Teléfono", value: telefono },
-        { label: "Dirección", value: direccion },
-        { label: "Segmento o rubro", value: segmento },
-        { label: "Fuerza de ventas", value: fuerza },
-        { label: "¿Ha comercializado un producto similar?", value: empresaSimilar || "No especificado" },
-        { label: "Detalle", value: detalle || "Sin detalles adicionales" },
-      ],
-    });
-  };
 
   const tabClass = (selectedTab: WholesaleTab) =>
     `flex-1 py-3 px-6 text-sm font-semibold rounded-full transition-all ${tab === selectedTab ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:text-foreground"}`;
