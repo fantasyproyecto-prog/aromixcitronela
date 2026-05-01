@@ -15,8 +15,6 @@ import { MapPin, CreditCard, CheckCircle, Paperclip, X, ArrowLeft } from "lucide
 import { supabase } from "@/integrations/supabase/client";
 import PayPalCheckout from "@/components/PayPalCheckout";
 
-const PAYPAL_CLIENT_ID = "AQ_OBTAIN_FROM_ENV";
-
 const COURIER_KEY_MAP: Record<string, CourierKey> = {
   "Liberty Express": "LIBERTY_EXPRESS",
   "Zoom": "ZOOM",
