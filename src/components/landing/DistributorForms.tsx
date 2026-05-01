@@ -7,11 +7,14 @@ import { toast } from "sonner";
 import { CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-const RATE_LIMIT_KEY = "aromix_dist_last_send";
-const RATE_LIMIT_MS = 30 * 1000;
-
 type WholesaleTab = "mayorista" | "emprender";
 type WholesaleOrigin = "Cotizar al mayor" | "Quiero emprender";
+
+const RATE_LIMIT_KEYS: Record<WholesaleTab, string> = {
+  mayorista: "aromix_dist_last_send_mayorista",
+  emprender: "aromix_dist_last_send_emprender",
+};
+const RATE_LIMIT_MS = 30 * 1000;
 
 interface LeadField {
   label: string;
@@ -40,8 +43,8 @@ const DistributorForms = () => {
     return () => window.removeEventListener("hashchange", applyHash);
   }, []);
 
-  const checkRateLimit = (): boolean => {
-    const lastSend = sessionStorage.getItem(RATE_LIMIT_KEY);
+  const checkRateLimit = (key: WholesaleTab): boolean => {
+    const lastSend = sessionStorage.getItem(RATE_LIMIT_KEYS[key]);
     if (lastSend && Date.now() - Number(lastSend) < RATE_LIMIT_MS) {
       toast.error("Ya hemos recibido tu solicitud. Por favor espera unos minutos antes de enviar otra.");
       return false;
@@ -50,17 +53,19 @@ const DistributorForms = () => {
   };
 
   const submitWholesaleLead = async ({
+    rateLimitKey,
     formOrigin,
     replyTo,
     fields,
     successMessage,
   }: {
+    rateLimitKey: WholesaleTab;
     formOrigin: WholesaleOrigin;
     replyTo: string;
     fields: LeadField[];
     successMessage: string;
   }) => {
-    if (!checkRateLimit()) return;
+    if (!checkRateLimit(rateLimitKey)) return;
 
     setSending(true);
     try {
@@ -79,7 +84,7 @@ const DistributorForms = () => {
         throw error ?? new Error("El backend no confirmó el envío del correo");
       }
 
-      sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
+      sessionStorage.setItem(RATE_LIMIT_KEYS[rateLimitKey], String(Date.now()));
       toast.success(successMessage);
       setSuccess(true);
     } catch (err) {
@@ -110,6 +115,7 @@ const DistributorForms = () => {
     const mensaje = String(data.get("m-mensaje") ?? "");
 
     await submitWholesaleLead({
+      rateLimitKey: "mayorista",
       formOrigin: "Cotizar al mayor",
       replyTo: email,
       successMessage: "¡Cotización solicitada! Te contactaremos pronto.",
@@ -144,6 +150,7 @@ const DistributorForms = () => {
     const email = String(data.get("e-email") ?? "");
 
     await submitWholesaleLead({
+      rateLimitKey: "emprender",
       formOrigin: "Quiero emprender",
       replyTo: email,
       successMessage: "¡Cotización solicitada! Te contactaremos pronto.",
