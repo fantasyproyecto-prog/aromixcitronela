@@ -366,6 +366,8 @@ const CheckoutForm = () => {
       setBancoEmisor("");
       setFechaPago("");
       setCedula("");
+      setCedulaTipo("V");
+      setStripeCedulaTipo("V");
       setCustomOfficeText("");
       setStripeCustomer({ name: "", email: "", phone: "", address: "", cedula: "" });
       removeReceipt();
