@@ -249,16 +249,25 @@ const CheckoutForm = () => {
   };
 
   const buildShippingPayload = () => {
+    const mrwOfficeLabel = selectedOffice === CUSTOM_OFFICE_VALUE
+      ? `Sede indicada por el cliente: ${customOfficeText.trim()}`
+      : (officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})` : selectedOffice);
+    const otherCourierOfficeLabel = otroDireccion === CUSTOM_OFFICE_VALUE
+      ? `Sede indicada por el cliente: ${customOfficeText.trim()}`
+      : otroDireccion.trim();
+
     const shipping_summary = isOtro
       ? `Envío por: ${otroEmpresa.trim()} - Estado: ${otroEstado.trim()} - Dirección: ${otroDireccion.trim()}`
       : isMRW
-        ? `MRW - ${officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})` : selectedOffice}`
-        : `${courier} - Estado: ${otroEstado.trim()} - Sede: ${otroDireccion.trim()}`;
+        ? `MRW - Estado: ${selectedEstado} - ${mrwOfficeLabel}`
+        : `${courier} - Estado: ${otroEstado.trim()} - Sede: ${otherCourierOfficeLabel}`;
     return {
       courier,
       summary: shipping_summary,
       state: isMRW ? selectedEstado : (isOtro ? otroEstado.trim() : otroEstado.trim()),
-      office: isMRW ? selectedOffice : (isOtro ? undefined : otroDireccion.trim()),
+      office: isMRW
+        ? (selectedOffice === CUSTOM_OFFICE_VALUE ? customOfficeText.trim() : selectedOffice)
+        : (isOtro ? undefined : (otroDireccion === CUSTOM_OFFICE_VALUE ? customOfficeText.trim() : otroDireccion.trim())),
       other: isOtro ? { company: otroEmpresa.trim(), state: otroEstado.trim(), address: otroDireccion.trim() } : null,
     };
   };
@@ -268,9 +277,13 @@ const CheckoutForm = () => {
     if (isOtro) {
       if (!otroEmpresa.trim() || !otroEstado.trim() || !otroDireccion.trim()) { toast.error("Completa los campos de la empresa de envío"); return false; }
     } else if (isMRW) {
+      if (!selectedEstado) { toast.error("Selecciona el estado de destino"); return false; }
       if (!selectedOffice) { toast.error("Selecciona la sede de MRW"); return false; }
+      if (selectedOffice === CUSTOM_OFFICE_VALUE && !customOfficeText.trim()) { toast.error("Escribe la sede de MRW"); return false; }
     } else {
-      if (!otroEstado.trim() || !otroDireccion.trim()) { toast.error(`Indica el estado y la sede de ${courier}`); return false; }
+      if (!otroEstado.trim()) { toast.error(`Indica el estado de ${courier}`); return false; }
+      if (!otroDireccion.trim()) { toast.error(`Indica la sede de ${courier}`); return false; }
+      if (otroDireccion === CUSTOM_OFFICE_VALUE && !customOfficeText.trim()) { toast.error(`Escribe la sede de ${courier}`); return false; }
     }
     return true;
   };
@@ -285,6 +298,10 @@ const CheckoutForm = () => {
       toast.error("Completa todos los datos de envío");
       return;
     }
+    if (!stripeCustomer.cedula.trim()) {
+      toast.error("Indica tu cédula de identidad (la solicitan las empresas de envío)");
+      return;
+    }
     if (!validateShipping()) return;
 
     setStripeLoading(true);
@@ -295,7 +312,10 @@ const CheckoutForm = () => {
 
       const { data: resp, error } = await supabase.functions.invoke("create-stripe-checkout", {
         body: {
-          customer: stripeCustomer,
+          customer: {
+            ...stripeCustomer,
+            address: `${stripeCustomer.address} | C.I: ${stripeCustomer.cedula.trim()}`,
+          },
           shipping,
           items: items.map((i) => ({ id: i.id, name: i.name, priceUSD: i.priceUSD, quantity: i.quantity, image: i.image })),
           successUrl,
