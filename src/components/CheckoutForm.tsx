@@ -156,11 +156,18 @@ const CheckoutForm = () => {
       const dirCliente = String(data.get("c-dir") ?? "");
       const referencia = String(data.get("referencia") ?? "");
 
+      const mrwOfficeLabel = selectedOffice === CUSTOM_OFFICE_VALUE
+        ? `Sede indicada por el cliente: ${customOfficeText.trim()}`
+        : (officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})` : selectedOffice);
+      const otherCourierOfficeLabel = otroDireccion === CUSTOM_OFFICE_VALUE
+        ? `Sede indicada por el cliente: ${customOfficeText.trim()}`
+        : otroDireccion.trim();
+
       const shipping_address = isOtro
         ? `Envío por: ${otroEmpresa.trim()} - Estado: ${otroEstado.trim()} - Dirección: ${otroDireccion.trim()}`
         : isMRW
-          ? `MRW - ${officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})` : selectedOffice}`
-          : `${courier} - Estado: ${otroEstado.trim()} - Sede: ${otroDireccion.trim()}`;
+          ? `MRW - Estado: ${selectedEstado} - ${mrwOfficeLabel}`
+          : `${courier} - Estado: ${otroEstado.trim()} - Sede: ${otherCourierOfficeLabel}`;
 
       const ext = receiptFile.name.split(".").pop()?.toLowerCase() || "jpg";
       const filePath = `${crypto.randomUUID()}.${ext}`;
