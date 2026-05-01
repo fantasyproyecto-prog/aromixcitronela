@@ -110,6 +110,7 @@ function buildHtml(type: string, data: Record<string, any>): { subject: string; 
       <table width="100%" cellpadding="0" cellspacing="0">
         ${row("Envío", e("shipping"))}
         ${row("Dirección", e("address"))}
+        ${row("Cédula", e("cedula"))}
       </table>
       <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #eef1e6;border-bottom:2px solid ${BRAND_GREEN};margin-top:12px;">
         ${itemsHtml}
