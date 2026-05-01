@@ -478,8 +478,36 @@ const CheckoutForm = () => {
               <div><Label htmlFor="s-dir">Dirección de envío</Label><Input id="s-dir" value={stripeCustomer.address} onChange={(e) => setStripeCustomer((c) => ({ ...c, address: e.target.value }))} required /></div>
               <div>
                 <Label htmlFor="s-cedula">Cédula de identidad</Label>
-                <Input id="s-cedula" value={stripeCustomer.cedula} onChange={(e) => setStripeCustomer((c) => ({ ...c, cedula: e.target.value }))} required placeholder="Ej: V-12345678" />
-                <p className="text-xs text-muted-foreground mt-1">Las empresas de envío la solicitan al despachar.</p>
+                <div className="flex gap-2">
+                  <select
+                    aria-label="Tipo de cédula"
+                    value={stripeCedulaTipo}
+                    onChange={(e) => setStripeCedulaTipo(e.target.value as "V" | "E")}
+                    className="h-10 rounded-md border border-input bg-background px-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="V">V (Venezolano)</option>
+                    <option value="E">E (Extranjero)</option>
+                  </select>
+                  <Input
+                    id="s-cedula"
+                    inputMode="numeric"
+                    pattern="\d*"
+                    maxLength={9}
+                    value={stripeCustomer.cedula}
+                    onChange={(e) =>
+                      setStripeCustomer((c) => ({
+                        ...c,
+                        cedula: e.target.value.replace(/\D/g, "").slice(0, 9),
+                      }))
+                    }
+                    required
+                    placeholder="12345678"
+                    className="flex-1"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Las empresas de envío la solicitan al despachar. Selecciona <strong>V</strong> si eres venezolano o <strong>E</strong> si eres extranjero.
+                </p>
               </div>
 
               <Separator />
