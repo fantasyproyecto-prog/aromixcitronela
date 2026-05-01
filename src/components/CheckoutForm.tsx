@@ -643,8 +643,31 @@ const CheckoutForm = () => {
               <div><Label htmlFor="c-dir">Dirección de envío</Label><Input id="c-dir" name="c-dir" required /></div>
               <div>
                 <Label htmlFor="c-cedula">Cédula de identidad</Label>
-                <Input id="c-cedula" value={cedula} onChange={(e) => setCedula(e.target.value)} required placeholder="Ej: V-12345678" />
-                <p className="text-xs text-muted-foreground mt-1">Las empresas de envío la solicitan al despachar.</p>
+                <div className="flex gap-2">
+                  <select
+                    aria-label="Tipo de cédula"
+                    value={cedulaTipo}
+                    onChange={(e) => setCedulaTipo(e.target.value as "V" | "E")}
+                    className="h-10 rounded-md border border-input bg-background px-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="V">V (Venezolano)</option>
+                    <option value="E">E (Extranjero)</option>
+                  </select>
+                  <Input
+                    id="c-cedula"
+                    inputMode="numeric"
+                    pattern="\d*"
+                    maxLength={9}
+                    value={cedula}
+                    onChange={(e) => setCedula(e.target.value.replace(/\D/g, "").slice(0, 9))}
+                    required
+                    placeholder="12345678"
+                    className="flex-1"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Las empresas de envío la solicitan al despachar. Selecciona <strong>V</strong> si eres venezolano o <strong>E</strong> si eres extranjero.
+                </p>
               </div>
 
               <Separator />
