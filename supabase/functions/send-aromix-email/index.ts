@@ -65,6 +65,7 @@ function buildHtml(type: string, data: Record<string, any>): { subject: string; 
       <p style="margin:0 0 24px;color:#6b7758;font-size:14px;">Un cliente acaba de completar una compra en la tienda.</p>
       <table width="100%" cellpadding="0" cellspacing="0">
         ${row("Cliente", e("name"))}
+        ${row("Cédula", e("cedula"))}
         ${row("Email", e("email"))}
         ${row("Teléfono", e("phone"))}
         ${row("Dirección", e("address"))}
