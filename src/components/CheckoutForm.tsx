@@ -325,6 +325,18 @@ const CheckoutForm = () => {
       if (error) throw error;
       if (!resp?.url) throw new Error("Stripe no devolvió URL de checkout");
 
+      // Persistir un flag para que, al volver de Stripe, siempre podamos
+      // mostrar el mensaje de éxito aunque la URL llegue sin query params
+      // (algunos navegadores/extensiones limpian el querystring en la redirección).
+      try {
+        sessionStorage.setItem("aromix_pending_stripe_checkout", String(Date.now()));
+        if (resp.orderId) {
+          sessionStorage.setItem("aromix_pending_stripe_order", String(resp.orderId));
+        }
+      } catch {
+        /* sessionStorage puede fallar en modo privado, no es crítico */
+      }
+
       window.location.href = resp.url;
     } catch (err) {
       console.error("Stripe checkout error:", err);
