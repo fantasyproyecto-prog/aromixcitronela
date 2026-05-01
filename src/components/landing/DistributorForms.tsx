@@ -236,6 +236,7 @@ const DistributorForms = () => {
                 </form>
               )}
 
+
               {tab === "empresa" && (
                 <form onSubmit={handleSubmitEmpresa} className="space-y-4">
                   <input type="text" name="company_website" tabIndex={-1} autoComplete="off" className="opacity-0 absolute -z-10 w-0 h-0" />
