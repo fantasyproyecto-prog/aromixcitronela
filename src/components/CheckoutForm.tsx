@@ -304,8 +304,8 @@ const CheckoutForm = () => {
       toast.error("Completa todos los datos de envío");
       return;
     }
-    if (!stripeCustomer.cedula.trim()) {
-      toast.error("Indica tu cédula de identidad (la solicitan las empresas de envío)");
+    if (!isValidCedulaNumber(stripeCustomer.cedula.trim())) {
+      toast.error("Cédula inválida. Debe tener entre 6 y 9 dígitos (ej: V-12345678)");
       return;
     }
     if (!validateShipping()) return;
