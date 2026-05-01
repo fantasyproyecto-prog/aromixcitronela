@@ -6,8 +6,11 @@ import { Label } from "@/components/ui/label";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
-import { estados, getOfficesByState } from "@/data/mrwOffices";
-import { getCourierStates, getCourierOffices, type CourierKey } from "@/data/courierOffices";
+import { getOfficesByState } from "@/data/mrwOffices";
+import { getCourierOffices, type CourierKey } from "@/data/courierOffices";
+import { VENEZUELA_STATES } from "@/data/venezuelaStates";
+
+const CUSTOM_OFFICE_VALUE = "__OTRA_SEDE__";
 import { MapPin, CreditCard, CheckCircle, Paperclip, X, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
