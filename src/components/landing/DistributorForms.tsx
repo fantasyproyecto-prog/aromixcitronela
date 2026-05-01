@@ -53,17 +53,19 @@ const DistributorForms = () => {
   };
 
   const submitWholesaleLead = async ({
+    rateLimitKey,
     formOrigin,
     replyTo,
     fields,
     successMessage,
   }: {
+    rateLimitKey: WholesaleTab;
     formOrigin: WholesaleOrigin;
     replyTo: string;
     fields: LeadField[];
     successMessage: string;
   }) => {
-    if (!checkRateLimit()) return;
+    if (!checkRateLimit(rateLimitKey)) return;
 
     setSending(true);
     try {
@@ -82,7 +84,7 @@ const DistributorForms = () => {
         throw error ?? new Error("El backend no confirmó el envío del correo");
       }
 
-      sessionStorage.setItem(RATE_LIMIT_KEY, String(Date.now()));
+      sessionStorage.setItem(RATE_LIMIT_KEYS[rateLimitKey], String(Date.now()));
       toast.success(successMessage);
       setSuccess(true);
     } catch (err) {
