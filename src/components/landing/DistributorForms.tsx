@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,8 +10,8 @@ import { supabase } from "@/integrations/supabase/client";
 const RATE_LIMIT_KEY = "aromix_dist_last_send";
 const RATE_LIMIT_MS = 30 * 1000;
 
-type WholesaleTab = "mayorista" | "emprender" | "empresa";
-type WholesaleOrigin = "Cotizar al mayor" | "Quiero emprender" | "Empresa distribuidora";
+type WholesaleTab = "mayorista" | "emprender";
+type WholesaleOrigin = "Cotizar al mayor" | "Quiero emprender";
 
 interface LeadField {
   label: string;
@@ -24,7 +24,21 @@ const DistributorForms = () => {
   const [success, setSuccess] = useState(false);
   const [mayoristaProducto, setMayoristaProducto] = useState("");
   const [emprenderInversion, setEmprenderInversion] = useState("");
-  const [empresaSimilar, setEmpresaSimilar] = useState("");
+
+  useEffect(() => {
+    const applyHash = () => {
+      if (window.location.hash === "#formularios-mayorista") {
+        setTab("mayorista");
+        document.getElementById("formularios")?.scrollIntoView({ behavior: "smooth" });
+      } else if (window.location.hash === "#formularios-emprender") {
+        setTab("emprender");
+        document.getElementById("formularios")?.scrollIntoView({ behavior: "smooth" });
+      }
+    };
+    applyHash();
+    window.addEventListener("hashchange", applyHash);
+    return () => window.removeEventListener("hashchange", applyHash);
+  }, []);
 
   const checkRateLimit = (): boolean => {
     const lastSend = sessionStorage.getItem(RATE_LIMIT_KEY);
@@ -144,41 +158,6 @@ const DistributorForms = () => {
     });
   };
 
-  const handleSubmitEmpresa = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const form = e.target as HTMLFormElement;
-    const data = new FormData(form);
-
-    if (data.get("company_website")) return;
-
-    const nombre = String(data.get("d-nombre") ?? "");
-    const empresa = String(data.get("d-empresa") ?? "");
-    const rif = String(data.get("d-rif") ?? "");
-    const telefono = String(data.get("d-tel") ?? "");
-    const email = String(data.get("d-email") ?? "");
-    const direccion = String(data.get("d-dir") ?? "");
-    const segmento = String(data.get("d-segmento") ?? "");
-    const fuerza = String(data.get("d-fuerza") ?? "");
-    const detalle = String(data.get("d-detalle") ?? "");
-
-    await submitWholesaleLead({
-      formOrigin: "Empresa distribuidora",
-      replyTo: email,
-      successMessage: "¡Información recibida! Nuestro equipo revisará tu solicitud.",
-      fields: [
-        { label: "Nombre completo", value: nombre },
-        { label: "Empresa", value: empresa },
-        { label: "RIF", value: rif },
-        { label: "Email", value: email },
-        { label: "Teléfono", value: telefono },
-        { label: "Dirección", value: direccion },
-        { label: "Segmento o rubro", value: segmento },
-        { label: "Fuerza de ventas", value: fuerza },
-        { label: "¿Ha comercializado un producto similar?", value: empresaSimilar || "No especificado" },
-        { label: "Detalle", value: detalle || "Sin detalles adicionales" },
-      ],
-    });
-  };
 
   const tabClass = (selectedTab: WholesaleTab) =>
     `flex-1 py-3 px-6 text-sm font-semibold rounded-full transition-all ${tab === selectedTab ? "bg-primary text-primary-foreground shadow-md" : "text-muted-foreground hover:text-foreground"}`;
@@ -200,7 +179,6 @@ const DistributorForms = () => {
               <div className="flex flex-wrap gap-2 p-1.5 bg-muted rounded-full mb-8">
                 <button type="button" className={tabClass("mayorista")} onClick={() => setTab("mayorista")}>Cotizar al mayor</button>
                 <button type="button" className={tabClass("emprender")} onClick={() => setTab("emprender")}>Quiero emprender</button>
-                <button type="button" className={tabClass("empresa")} onClick={() => setTab("empresa")}>Empresa distribuidora</button>
               </div>
 
               {tab === "mayorista" && (
@@ -254,38 +232,6 @@ const DistributorForms = () => {
                   </div>
                   <Button type="submit" disabled={sending} className="w-full bg-primary hover:bg-citric-dark text-primary-foreground font-semibold rounded-full disabled:opacity-50" size="lg">
                     {sending ? "Procesando..." : "Enviar solicitud"}
-                  </Button>
-                </form>
-              )}
-
-              {tab === "empresa" && (
-                <form onSubmit={handleSubmitEmpresa} className="space-y-4">
-                  <input type="text" name="company_website" tabIndex={-1} autoComplete="off" className="opacity-0 absolute -z-10 w-0 h-0" />
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div><Label htmlFor="d-nombre">Nombre completo</Label><Input id="d-nombre" name="d-nombre" required /></div>
-                    <div><Label htmlFor="d-empresa">Nombre de la empresa</Label><Input id="d-empresa" name="d-empresa" required /></div>
-                  </div>
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div><Label htmlFor="d-rif">RIF</Label><Input id="d-rif" name="d-rif" required /></div>
-                    <div><Label htmlFor="d-tel">Teléfono</Label><Input id="d-tel" name="d-tel" type="tel" required /></div>
-                  </div>
-                  <div><Label htmlFor="d-email">Email</Label><Input id="d-email" name="d-email" type="email" required /></div>
-                  <div><Label htmlFor="d-dir">Dirección</Label><Input id="d-dir" name="d-dir" required /></div>
-                  <div><Label htmlFor="d-segmento">Segmento o rubro</Label><Input id="d-segmento" name="d-segmento" placeholder="Retail, Food Service, etc." required /></div>
-                  <div><Label htmlFor="d-fuerza">Fuerza de ventas (cantidad de vendedores)</Label><Input id="d-fuerza" name="d-fuerza" type="number" required /></div>
-                  <div>
-                    <Label>¿Ha comercializado un producto similar?</Label>
-                    <Select value={empresaSimilar} onValueChange={setEmpresaSimilar}>
-                      <SelectTrigger><SelectValue placeholder="Selecciona" /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Sí">Sí</SelectItem>
-                        <SelectItem value="No">No</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div><Label htmlFor="d-detalle">Detalle (opcional)</Label><Input id="d-detalle" name="d-detalle" /></div>
-                  <Button type="submit" disabled={sending} className="w-full bg-primary hover:bg-citric-dark text-primary-foreground font-semibold rounded-full disabled:opacity-50" size="lg">
-                    {sending ? "Procesando..." : "Enviar información"}
                   </Button>
                 </form>
               )}
