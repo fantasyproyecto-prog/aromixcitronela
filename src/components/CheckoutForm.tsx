@@ -450,17 +450,20 @@ const CheckoutForm = () => {
                 </div>
               </button>
 
-              {/* PayPal - próximamente */}
-              <div className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-border bg-muted/40 opacity-70 cursor-not-allowed">
-                <div className="h-12 w-12 rounded-full bg-background flex items-center justify-center shrink-0">
-                  <span className="font-bold text-muted-foreground text-sm">PP</span>
+              {/* PayPal */}
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("paypal")}
+                className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-primary/40 hover:border-primary hover:bg-primary/5 transition-colors text-left"
+              >
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <span className="font-bold text-primary text-sm">PP</span>
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-muted-foreground">PayPal</p>
-                  <p className="text-xs text-muted-foreground">Pago internacional con cuenta PayPal</p>
+                  <p className="font-semibold text-foreground">PayPal (USD)</p>
+                  <p className="text-xs text-muted-foreground">Paga con tu cuenta PayPal o tarjeta vía PayPal</p>
                 </div>
-                <span className="text-xs font-semibold bg-amber-500/20 text-amber-700 px-2 py-1 rounded-full">Próximamente</span>
-              </div>
+              </button>
             </div>
           </>
         ) : paymentMethod === "stripe" ? (
