@@ -27,6 +27,8 @@ export type Database = {
           items: Json
           payment_method: string
           payment_reference: string | null
+          paypal_capture_id: string | null
+          paypal_order_id: string | null
           receipt_path: string | null
           receipt_url: string | null
           shipping_courier: string
@@ -52,6 +54,8 @@ export type Database = {
           items: Json
           payment_method: string
           payment_reference?: string | null
+          paypal_capture_id?: string | null
+          paypal_order_id?: string | null
           receipt_path?: string | null
           receipt_url?: string | null
           shipping_courier: string
@@ -77,6 +81,8 @@ export type Database = {
           items?: Json
           payment_method?: string
           payment_reference?: string | null
+          paypal_capture_id?: string | null
+          paypal_order_id?: string | null
           receipt_path?: string | null
           receipt_url?: string | null
           shipping_courier?: string
