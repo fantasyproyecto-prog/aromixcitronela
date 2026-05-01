@@ -6,8 +6,11 @@ import { Label } from "@/components/ui/label";
 import { useCart } from "@/contexts/CartContext";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
-import { estados, getOfficesByState } from "@/data/mrwOffices";
-import { getCourierStates, getCourierOffices, type CourierKey } from "@/data/courierOffices";
+import { getOfficesByState } from "@/data/mrwOffices";
+import { getCourierOffices, type CourierKey } from "@/data/courierOffices";
+import { VENEZUELA_STATES } from "@/data/venezuelaStates";
+
+const CUSTOM_OFFICE_VALUE = "__OTRA_SEDE__";
 import { MapPin, CreditCard, CheckCircle, Paperclip, X, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -35,10 +38,12 @@ const CheckoutForm = () => {
   const [otroDireccion, setOtroDireccion] = useState("");
   const [bancoEmisor, setBancoEmisor] = useState("");
   const [fechaPago, setFechaPago] = useState("");
+  const [cedula, setCedula] = useState("");
+  const [customOfficeText, setCustomOfficeText] = useState(""); // sede escrita manualmente
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [stripeLoading, setStripeLoading] = useState(false);
-  const [stripeCustomer, setStripeCustomer] = useState({ name: "", email: "", phone: "", address: "" });
+  const [stripeCustomer, setStripeCustomer] = useState({ name: "", email: "", phone: "", address: "", cedula: "" });
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -84,16 +89,36 @@ const CheckoutForm = () => {
         return;
       }
     } else if (isMRW) {
+      if (!selectedEstado) {
+        toast.error("Selecciona el estado de destino");
+        return;
+      }
       if (!selectedOffice) {
         toast.error("Selecciona la sede de MRW de destino");
         return;
       }
-    } else {
-      // Liberty Express, Zoom, DHL
-      if (!otroEstado.trim() || !otroDireccion.trim()) {
-        toast.error(`Indica el estado y la sede de ${courier}`);
+      if (selectedOffice === CUSTOM_OFFICE_VALUE && !customOfficeText.trim()) {
+        toast.error("Escribe la sede de MRW donde quieres recibir el pedido");
         return;
       }
+    } else {
+      // Liberty Express, Zoom, DHL
+      if (!otroEstado.trim()) {
+        toast.error(`Indica el estado de ${courier}`);
+        return;
+      }
+      if (!otroDireccion.trim()) {
+        toast.error(`Indica la sede de ${courier}`);
+        return;
+      }
+      if (otroDireccion === CUSTOM_OFFICE_VALUE && !customOfficeText.trim()) {
+        toast.error(`Escribe la sede de ${courier} donde quieres recibir el pedido`);
+        return;
+      }
+    }
+    if (!cedula.trim()) {
+      toast.error("Indica tu cédula de identidad (la solicitan las empresas de envío)");
+      return;
     }
     if (!receiptFile) {
       toast.error("Adjunta el capture del comprobante de pago");
@@ -131,11 +156,18 @@ const CheckoutForm = () => {
       const dirCliente = String(data.get("c-dir") ?? "");
       const referencia = String(data.get("referencia") ?? "");
 
+      const mrwOfficeLabel = selectedOffice === CUSTOM_OFFICE_VALUE
+        ? `Sede indicada por el cliente: ${customOfficeText.trim()}`
+        : (officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})` : selectedOffice);
+      const otherCourierOfficeLabel = otroDireccion === CUSTOM_OFFICE_VALUE
+        ? `Sede indicada por el cliente: ${customOfficeText.trim()}`
+        : otroDireccion.trim();
+
       const shipping_address = isOtro
         ? `Envío por: ${otroEmpresa.trim()} - Estado: ${otroEstado.trim()} - Dirección: ${otroDireccion.trim()}`
         : isMRW
-          ? `MRW - ${officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})` : selectedOffice}`
-          : `${courier} - Estado: ${otroEstado.trim()} - Sede: ${otroDireccion.trim()}`;
+          ? `MRW - Estado: ${selectedEstado} - ${mrwOfficeLabel}`
+          : `${courier} - Estado: ${otroEstado.trim()} - Sede: ${otherCourierOfficeLabel}`;
 
       const ext = receiptFile.name.split(".").pop()?.toLowerCase() || "jpg";
       const filePath = `${crypto.randomUUID()}.${ext}`;
@@ -160,6 +192,7 @@ const CheckoutForm = () => {
             email: emailCliente || "No proporcionado",
             phone: telCliente,
             address: dirCliente,
+            cedula: cedula.trim(),
             shipping: shipping_address,
             shippingCourier: courier,
             shippingIsOther: isOtro,
@@ -188,6 +221,7 @@ const CheckoutForm = () => {
                 name: nombreCliente,
                 shipping: shipping_address,
                 address: dirCliente,
+                cedula: cedula.trim(),
                 reference: referencia,
                 bank: bancoEmisor.trim(),
                 paymentDate: fechaPago,
@@ -215,16 +249,25 @@ const CheckoutForm = () => {
   };
 
   const buildShippingPayload = () => {
+    const mrwOfficeLabel = selectedOffice === CUSTOM_OFFICE_VALUE
+      ? `Sede indicada por el cliente: ${customOfficeText.trim()}`
+      : (officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})` : selectedOffice);
+    const otherCourierOfficeLabel = otroDireccion === CUSTOM_OFFICE_VALUE
+      ? `Sede indicada por el cliente: ${customOfficeText.trim()}`
+      : otroDireccion.trim();
+
     const shipping_summary = isOtro
       ? `Envío por: ${otroEmpresa.trim()} - Estado: ${otroEstado.trim()} - Dirección: ${otroDireccion.trim()}`
       : isMRW
-        ? `MRW - ${officeDetail ? `${officeDetail.nombre} - ${officeDetail.direccion} (Tel: ${officeDetail.telefono})` : selectedOffice}`
-        : `${courier} - Estado: ${otroEstado.trim()} - Sede: ${otroDireccion.trim()}`;
+        ? `MRW - Estado: ${selectedEstado} - ${mrwOfficeLabel}`
+        : `${courier} - Estado: ${otroEstado.trim()} - Sede: ${otherCourierOfficeLabel}`;
     return {
       courier,
       summary: shipping_summary,
       state: isMRW ? selectedEstado : (isOtro ? otroEstado.trim() : otroEstado.trim()),
-      office: isMRW ? selectedOffice : (isOtro ? undefined : otroDireccion.trim()),
+      office: isMRW
+        ? (selectedOffice === CUSTOM_OFFICE_VALUE ? customOfficeText.trim() : selectedOffice)
+        : (isOtro ? undefined : (otroDireccion === CUSTOM_OFFICE_VALUE ? customOfficeText.trim() : otroDireccion.trim())),
       other: isOtro ? { company: otroEmpresa.trim(), state: otroEstado.trim(), address: otroDireccion.trim() } : null,
     };
   };
@@ -234,9 +277,13 @@ const CheckoutForm = () => {
     if (isOtro) {
       if (!otroEmpresa.trim() || !otroEstado.trim() || !otroDireccion.trim()) { toast.error("Completa los campos de la empresa de envío"); return false; }
     } else if (isMRW) {
+      if (!selectedEstado) { toast.error("Selecciona el estado de destino"); return false; }
       if (!selectedOffice) { toast.error("Selecciona la sede de MRW"); return false; }
+      if (selectedOffice === CUSTOM_OFFICE_VALUE && !customOfficeText.trim()) { toast.error("Escribe la sede de MRW"); return false; }
     } else {
-      if (!otroEstado.trim() || !otroDireccion.trim()) { toast.error(`Indica el estado y la sede de ${courier}`); return false; }
+      if (!otroEstado.trim()) { toast.error(`Indica el estado de ${courier}`); return false; }
+      if (!otroDireccion.trim()) { toast.error(`Indica la sede de ${courier}`); return false; }
+      if (otroDireccion === CUSTOM_OFFICE_VALUE && !customOfficeText.trim()) { toast.error(`Escribe la sede de ${courier}`); return false; }
     }
     return true;
   };
@@ -251,6 +298,10 @@ const CheckoutForm = () => {
       toast.error("Completa todos los datos de envío");
       return;
     }
+    if (!stripeCustomer.cedula.trim()) {
+      toast.error("Indica tu cédula de identidad (la solicitan las empresas de envío)");
+      return;
+    }
     if (!validateShipping()) return;
 
     setStripeLoading(true);
@@ -261,7 +312,10 @@ const CheckoutForm = () => {
 
       const { data: resp, error } = await supabase.functions.invoke("create-stripe-checkout", {
         body: {
-          customer: stripeCustomer,
+          customer: {
+            ...stripeCustomer,
+            address: `${stripeCustomer.address} | C.I: ${stripeCustomer.cedula.trim()}`,
+          },
           shipping,
           items: items.map((i) => ({ id: i.id, name: i.name, priceUSD: i.priceUSD, quantity: i.quantity, image: i.image })),
           successUrl,
@@ -293,7 +347,9 @@ const CheckoutForm = () => {
       setOtroDireccion("");
       setBancoEmisor("");
       setFechaPago("");
-      setStripeCustomer({ name: "", email: "", phone: "", address: "" });
+      setCedula("");
+      setCustomOfficeText("");
+      setStripeCustomer({ name: "", email: "", phone: "", address: "", cedula: "" });
       removeReceipt();
     }
   };
@@ -400,6 +456,11 @@ const CheckoutForm = () => {
               <div><Label htmlFor="s-email">Correo electrónico</Label><Input id="s-email" type="email" value={stripeCustomer.email} onChange={(e) => setStripeCustomer((c) => ({ ...c, email: e.target.value }))} required placeholder="tu@correo.com" /></div>
               <div><Label htmlFor="s-tel">Teléfono</Label><Input id="s-tel" type="tel" value={stripeCustomer.phone} onChange={(e) => setStripeCustomer((c) => ({ ...c, phone: e.target.value }))} required /></div>
               <div><Label htmlFor="s-dir">Dirección de envío</Label><Input id="s-dir" value={stripeCustomer.address} onChange={(e) => setStripeCustomer((c) => ({ ...c, address: e.target.value }))} required /></div>
+              <div>
+                <Label htmlFor="s-cedula">Cédula de identidad</Label>
+                <Input id="s-cedula" value={stripeCustomer.cedula} onChange={(e) => setStripeCustomer((c) => ({ ...c, cedula: e.target.value }))} required placeholder="Ej: V-12345678" />
+                <p className="text-xs text-muted-foreground mt-1">Las empresas de envío la solicitan al despachar.</p>
+              </div>
 
               <Separator />
               <div className="space-y-3">
@@ -408,7 +469,7 @@ const CheckoutForm = () => {
                 </p>
                 <div>
                   <Label htmlFor="s-courier">Selecciona el courier</Label>
-                  <select id="s-courier" value={courier} onChange={(e) => { setCourier(e.target.value as Courier); setSelectedEstado(""); setSelectedOffice(""); setOtroEmpresa(""); setOtroEstado(""); setOtroDireccion(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                  <select id="s-courier" value={courier} onChange={(e) => { setCourier(e.target.value as Courier); setSelectedEstado(""); setSelectedOffice(""); setOtroEmpresa(""); setOtroEstado(""); setOtroDireccion(""); setCustomOfficeText(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
                     <option value="">Selecciona una empresa</option>
                     {COURIERS.map((c) => (<option key={c} value={c}>{c === "Otro" ? "Otro (Especificar)" : c}</option>))}
                   </select>
@@ -418,18 +479,25 @@ const CheckoutForm = () => {
                   <>
                     <div>
                       <Label>Estado</Label>
-                      <select value={selectedEstado} onChange={(e) => { setSelectedEstado(e.target.value); setSelectedOffice(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                      <select value={selectedEstado} onChange={(e) => { setSelectedEstado(e.target.value); setSelectedOffice(""); setCustomOfficeText(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
                         <option value="">Selecciona un estado</option>
-                        {estados.map((e) => (<option key={e} value={e}>{e}</option>))}
+                        {VENEZUELA_STATES.map((e) => (<option key={e} value={e}>{e}</option>))}
                       </select>
                     </div>
                     {selectedEstado && (
                       <div>
                         <Label>Sede MRW</Label>
-                        <select value={selectedOffice} onChange={(e) => setSelectedOffice(e.target.value)} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                        <select value={selectedOffice} onChange={(e) => { setSelectedOffice(e.target.value); setCustomOfficeText(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
                           <option value="">Selecciona una sede</option>
                           {offices.map((o) => (<option key={o.codigo} value={o.codigo}>{o.nombre}</option>))}
+                          <option value={CUSTOM_OFFICE_VALUE}>Otra sede (escribir manualmente)</option>
                         </select>
+                      </div>
+                    )}
+                    {selectedOffice === CUSTOM_OFFICE_VALUE && (
+                      <div>
+                        <Label>Escribe la sede de MRW</Label>
+                        <Input value={customOfficeText} onChange={(e) => setCustomOfficeText(e.target.value)} required placeholder="Nombre y dirección de la sede" />
                       </div>
                     )}
                   </>
@@ -437,24 +505,30 @@ const CheckoutForm = () => {
 
                 {isOtherKnownCourier && (() => {
                   const courierKey = COURIER_KEY_MAP[courier];
-                  const courierStates = getCourierStates(courierKey);
                   const courierOffices = otroEstado ? getCourierOffices(courierKey, otroEstado) : [];
                   return (
                     <div className="space-y-3 rounded-lg border border-primary/20 bg-accent/30 p-3">
                       <div>
                         <Label>Estado</Label>
-                        <select value={otroEstado} onChange={(e) => { setOtroEstado(e.target.value); setOtroDireccion(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                        <select value={otroEstado} onChange={(e) => { setOtroEstado(e.target.value); setOtroDireccion(""); setCustomOfficeText(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
                           <option value="">Selecciona un estado</option>
-                          {courierStates.map((s) => (<option key={s} value={s}>{s}</option>))}
+                          {VENEZUELA_STATES.map((s) => (<option key={s} value={s}>{s}</option>))}
                         </select>
                       </div>
                       {otroEstado && (
                         <div>
                           <Label>Sede de {courier}</Label>
-                          <select value={otroDireccion} onChange={(e) => setOtroDireccion(e.target.value)} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                          <select value={otroDireccion} onChange={(e) => { setOtroDireccion(e.target.value); setCustomOfficeText(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
                             <option value="">Selecciona una sede</option>
                             {courierOffices.map((o, idx) => (<option key={`${o.name}-${idx}`} value={`${o.name} — ${o.address}`}>{o.name}</option>))}
+                            <option value={CUSTOM_OFFICE_VALUE}>Otra sede (escribir manualmente)</option>
                           </select>
+                        </div>
+                      )}
+                      {otroDireccion === CUSTOM_OFFICE_VALUE && (
+                        <div>
+                          <Label>Escribe la sede de {courier}</Label>
+                          <Input value={customOfficeText} onChange={(e) => setCustomOfficeText(e.target.value)} required placeholder="Nombre y dirección de la sede" />
                         </div>
                       )}
                     </div>
@@ -519,6 +593,11 @@ const CheckoutForm = () => {
               <div><Label htmlFor="c-email">Correo electrónico</Label><Input id="c-email" name="c-email" type="email" required placeholder="tu@correo.com" /></div>
               <div><Label htmlFor="c-tel">Teléfono de contacto</Label><Input id="c-tel" name="c-tel" type="tel" required /></div>
               <div><Label htmlFor="c-dir">Dirección de envío</Label><Input id="c-dir" name="c-dir" required /></div>
+              <div>
+                <Label htmlFor="c-cedula">Cédula de identidad</Label>
+                <Input id="c-cedula" value={cedula} onChange={(e) => setCedula(e.target.value)} required placeholder="Ej: V-12345678" />
+                <p className="text-xs text-muted-foreground mt-1">Las empresas de envío la solicitan al despachar.</p>
+              </div>
 
               <Separator />
               <div className="space-y-3">
@@ -537,6 +616,7 @@ const CheckoutForm = () => {
                       setOtroEmpresa("");
                       setOtroEstado("");
                       setOtroDireccion("");
+                      setCustomOfficeText("");
                     }}
                     required
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
@@ -552,21 +632,28 @@ const CheckoutForm = () => {
                   <>
                     <div>
                       <Label htmlFor="mrw-estado">Estado</Label>
-                      <select id="mrw-estado" value={selectedEstado} onChange={(e) => { setSelectedEstado(e.target.value); setSelectedOffice(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                      <select id="mrw-estado" value={selectedEstado} onChange={(e) => { setSelectedEstado(e.target.value); setSelectedOffice(""); setCustomOfficeText(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                         <option value="">Selecciona un estado</option>
-                        {estados.map((e) => (<option key={e} value={e}>{e}</option>))}
+                        {VENEZUELA_STATES.map((e) => (<option key={e} value={e}>{e}</option>))}
                       </select>
                     </div>
                     {selectedEstado && (
                       <div>
                         <Label htmlFor="mrw-oficina">Sede / Oficina de MRW</Label>
-                        <select id="mrw-oficina" value={selectedOffice} onChange={(e) => setSelectedOffice(e.target.value)} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                        <select id="mrw-oficina" value={selectedOffice} onChange={(e) => { setSelectedOffice(e.target.value); setCustomOfficeText(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
                           <option value="">Selecciona una sede</option>
                           {offices.map((o) => (<option key={o.codigo} value={o.codigo}>{o.nombre}</option>))}
+                          <option value={CUSTOM_OFFICE_VALUE}>Otra sede (escribir manualmente)</option>
                         </select>
                       </div>
                     )}
-                    {officeDetail && (
+                    {selectedOffice === CUSTOM_OFFICE_VALUE && (
+                      <div>
+                        <Label htmlFor="mrw-custom">Escribe la sede de MRW</Label>
+                        <Input id="mrw-custom" value={customOfficeText} onChange={(e) => setCustomOfficeText(e.target.value)} required placeholder="Nombre y dirección de la sede" />
+                      </div>
+                    )}
+                    {officeDetail && selectedOffice !== CUSTOM_OFFICE_VALUE && (
                       <div className="bg-accent/40 rounded-lg p-3 text-xs text-muted-foreground space-y-1">
                         <p className="font-semibold text-foreground">{officeDetail.nombre}</p>
                         <p>{officeDetail.direccion}</p>
@@ -578,7 +665,6 @@ const CheckoutForm = () => {
 
                 {isOtherKnownCourier && (() => {
                   const courierKey = COURIER_KEY_MAP[courier];
-                  const courierStates = getCourierStates(courierKey);
                   const courierOffices = otroEstado ? getCourierOffices(courierKey, otroEstado) : [];
                   return (
                     <div className="space-y-3 rounded-lg border border-primary/20 bg-accent/30 p-3">
@@ -590,16 +676,13 @@ const CheckoutForm = () => {
                         <select
                           id="courier-estado"
                           value={otroEstado}
-                          onChange={(e) => { setOtroEstado(e.target.value); setOtroDireccion(""); }}
+                          onChange={(e) => { setOtroEstado(e.target.value); setOtroDireccion(""); setCustomOfficeText(""); }}
                           required
                           className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                         >
                           <option value="">Selecciona un estado</option>
-                          {courierStates.map((s) => (<option key={s} value={s}>{s}</option>))}
+                          {VENEZUELA_STATES.map((s) => (<option key={s} value={s}>{s}</option>))}
                         </select>
-                        {courierStates.length === 0 && (
-                          <p className="text-xs text-destructive mt-1">No hay sedes registradas para {courier}.</p>
-                        )}
                       </div>
                       {otroEstado && (
                         <div>
@@ -607,7 +690,7 @@ const CheckoutForm = () => {
                           <select
                             id="courier-sede"
                             value={otroDireccion}
-                            onChange={(e) => setOtroDireccion(e.target.value)}
+                            onChange={(e) => { setOtroDireccion(e.target.value); setCustomOfficeText(""); }}
                             required
                             className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                           >
@@ -615,13 +698,20 @@ const CheckoutForm = () => {
                             {courierOffices.map((o, idx) => (
                               <option key={`${o.name}-${idx}`} value={`${o.name} — ${o.address}`}>{o.name}</option>
                             ))}
+                            <option value={CUSTOM_OFFICE_VALUE}>Otra sede (escribir manualmente)</option>
                           </select>
                           {courierOffices.length === 0 && (
-                            <p className="text-xs text-destructive mt-1">No hay sedes en este estado para {courier}.</p>
+                            <p className="text-xs text-muted-foreground mt-1">No tenemos sedes registradas en este estado. Selecciona "Otra sede" para escribirla.</p>
                           )}
                         </div>
                       )}
-                      {otroDireccion && (
+                      {otroDireccion === CUSTOM_OFFICE_VALUE && (
+                        <div>
+                          <Label htmlFor="courier-custom">Escribe la sede de {courier}</Label>
+                          <Input id="courier-custom" value={customOfficeText} onChange={(e) => setCustomOfficeText(e.target.value)} required placeholder="Nombre y dirección de la sede" />
+                        </div>
+                      )}
+                      {otroDireccion && otroDireccion !== CUSTOM_OFFICE_VALUE && (
                         <div className="bg-background/60 rounded-lg p-2 text-xs text-muted-foreground">
                           {otroDireccion}
                         </div>

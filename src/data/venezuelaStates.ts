@@ -1,0 +1,28 @@
+// Lista canónica de los 24 estados de Venezuela (incluye Distrito Capital).
+// Se usa como fuente de verdad para los selects de envío.
+export const VENEZUELA_STATES: string[] = [
+  "Amazonas",
+  "Anzoátegui",
+  "Apure",
+  "Aragua",
+  "Barinas",
+  "Bolívar",
+  "Carabobo",
+  "Cojedes",
+  "Delta Amacuro",
+  "Distrito Capital",
+  "Falcón",
+  "Guárico",
+  "La Guaira",
+  "Lara",
+  "Mérida",
+  "Miranda",
+  "Monagas",
+  "Nueva Esparta",
+  "Portuguesa",
+  "Sucre",
+  "Táchira",
+  "Trujillo",
+  "Yaracuy",
+  "Zulia",
+];
