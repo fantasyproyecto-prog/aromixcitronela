@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { VENEZUELA_STATES } from "@/data/venezuelaStates";
 const CUSTOM_OFFICE_VALUE = "__OTRA_SEDE__";
 import { MapPin, CreditCard, CheckCircle, Paperclip, X, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import PayPalCheckout from "@/components/PayPalCheckout";
 
 const COURIER_KEY_MAP: Record<string, CourierKey> = {
   "Liberty Express": "LIBERTY_EXPRESS",
@@ -23,7 +24,7 @@ const COURIER_KEY_MAP: Record<string, CourierKey> = {
 const RATE_LIMIT_KEY = "aromix_checkout_last_send";
 const RATE_LIMIT_MS = 5 * 60 * 1000;
 
-type PaymentMethod = "pago-movil" | "stripe" | null;
+type PaymentMethod = "pago-movil" | "stripe" | "paypal" | null;
 type Courier = "MRW" | "Liberty Express" | "Zoom" | "DHL" | "Otro" | "";
 const COURIERS: Exclude<Courier, "">[] = ["MRW", "Liberty Express", "Zoom", "DHL", "Otro"];
 
@@ -53,6 +54,24 @@ const CheckoutForm = () => {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // PayPal
+  const [paypalClientId, setPaypalClientId] = useState<string | null>(null);
+  const [paypalCedulaTipo, setPaypalCedulaTipo] = useState<"V" | "E">("V");
+  const [paypalCustomer, setPaypalCustomer] = useState({ name: "", email: "", phone: "", address: "", cedula: "" });
+  const [paypalDataReady, setPaypalDataReady] = useState(false);
+
+  useEffect(() => {
+    if (paymentMethod !== "paypal" || paypalClientId) return;
+    supabase.functions.invoke("paypal-config").then(({ data, error }) => {
+      if (error || !data?.clientId) {
+        console.error("paypal-config error:", error);
+        toast.error("No se pudo cargar PayPal");
+        return;
+      }
+      setPaypalClientId(data.clientId as string);
+    });
+  }, [paymentMethod, paypalClientId]);
 
   const isOtro = courier === "Otro";
   const isMRW = courier === "MRW";
@@ -370,6 +389,9 @@ const CheckoutForm = () => {
       setStripeCedulaTipo("V");
       setCustomOfficeText("");
       setStripeCustomer({ name: "", email: "", phone: "", address: "", cedula: "" });
+      setPaypalCustomer({ name: "", email: "", phone: "", address: "", cedula: "" });
+      setPaypalCedulaTipo("V");
+      setPaypalDataReady(false);
       removeReceipt();
     }
   };
@@ -428,17 +450,20 @@ const CheckoutForm = () => {
                 </div>
               </button>
 
-              {/* PayPal - próximamente */}
-              <div className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-border bg-muted/40 opacity-70 cursor-not-allowed">
-                <div className="h-12 w-12 rounded-full bg-background flex items-center justify-center shrink-0">
-                  <span className="font-bold text-muted-foreground text-sm">PP</span>
+              {/* PayPal */}
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("paypal")}
+                className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-primary/40 hover:border-primary hover:bg-primary/5 transition-colors text-left"
+              >
+                <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <span className="font-bold text-primary text-sm">PP</span>
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-muted-foreground">PayPal</p>
-                  <p className="text-xs text-muted-foreground">Pago internacional con cuenta PayPal</p>
+                  <p className="font-semibold text-foreground">PayPal (USD)</p>
+                  <p className="text-xs text-muted-foreground">Paga con tu cuenta PayPal o tarjeta vía PayPal</p>
                 </div>
-                <span className="text-xs font-semibold bg-amber-500/20 text-amber-700 px-2 py-1 rounded-full">Próximamente</span>
-              </div>
+              </button>
             </div>
           </>
         ) : paymentMethod === "stripe" ? (
@@ -599,6 +624,188 @@ const CheckoutForm = () => {
                 Serás redirigido al portal seguro de Stripe para completar el pago.
               </p>
             </form>
+          </>
+        ) : paymentMethod === "paypal" ? (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold flex items-center gap-2">
+                <button type="button" onClick={() => { setPaymentMethod(null); setPaypalDataReady(false); }} className="text-muted-foreground hover:text-foreground" aria-label="Volver">
+                  <ArrowLeft className="h-5 w-5" />
+                </button>
+                Pago con PayPal
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="bg-accent/50 rounded-xl p-4 space-y-2 text-sm">
+              <p className="font-semibold text-foreground">Resumen del pedido</p>
+              {items.map((i) => (
+                <div key={i.id} className="flex justify-between text-muted-foreground">
+                  <span>{i.name} × {i.quantity}</span>
+                  <span>${(i.priceUSD * i.quantity).toFixed(2)}</span>
+                </div>
+              ))}
+              <Separator />
+              <div className="flex justify-between font-bold text-foreground">
+                <span>Total a cobrar</span>
+                <span>${totalUSD.toFixed(2)} USD</span>
+              </div>
+              <p className="text-xs text-muted-foreground">El pago se procesa en USD por PayPal.</p>
+            </div>
+
+            {!paypalDataReady ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!paypalCustomer.name || !paypalCustomer.email || !paypalCustomer.phone || !paypalCustomer.address) {
+                    toast.error("Completa todos los datos de envío"); return;
+                  }
+                  if (!isValidCedulaNumber(paypalCustomer.cedula.trim())) {
+                    toast.error("Cédula inválida. Debe tener entre 6 y 9 dígitos (ej: V-12345678)"); return;
+                  }
+                  if (!validateShipping()) return;
+                  setPaypalDataReady(true);
+                }}
+                className="space-y-4 mt-2"
+              >
+                <p className="text-sm font-semibold text-foreground">Datos de envío</p>
+                <div><Label htmlFor="p-nombre">Nombre completo</Label><Input id="p-nombre" value={paypalCustomer.name} onChange={(e) => setPaypalCustomer((c) => ({ ...c, name: e.target.value }))} required /></div>
+                <div><Label htmlFor="p-email">Correo electrónico</Label><Input id="p-email" type="email" value={paypalCustomer.email} onChange={(e) => setPaypalCustomer((c) => ({ ...c, email: e.target.value }))} required placeholder="tu@correo.com" /></div>
+                <div><Label htmlFor="p-tel">Teléfono</Label><Input id="p-tel" type="tel" value={paypalCustomer.phone} onChange={(e) => setPaypalCustomer((c) => ({ ...c, phone: e.target.value }))} required /></div>
+                <div><Label htmlFor="p-dir">Dirección de envío</Label><Input id="p-dir" value={paypalCustomer.address} onChange={(e) => setPaypalCustomer((c) => ({ ...c, address: e.target.value }))} required /></div>
+                <div>
+                  <Label htmlFor="p-cedula">Cédula de identidad</Label>
+                  <div className="flex gap-2">
+                    <select aria-label="Tipo de cédula" value={paypalCedulaTipo} onChange={(e) => setPaypalCedulaTipo(e.target.value as "V" | "E")} className="h-10 rounded-md border border-input bg-background px-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring">
+                      <option value="V">V (Venezolano)</option>
+                      <option value="E">E (Extranjero)</option>
+                    </select>
+                    <Input id="p-cedula" inputMode="numeric" pattern="\d*" maxLength={9} value={paypalCustomer.cedula} onChange={(e) => setPaypalCustomer((c) => ({ ...c, cedula: e.target.value.replace(/\D/g, "").slice(0, 9) }))} required placeholder="12345678" className="flex-1" />
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">Selecciona <strong>V</strong> si eres venezolano o <strong>E</strong> si eres extranjero.</p>
+                </div>
+
+                <Separator />
+                <div className="space-y-3">
+                  <p className="text-sm font-semibold text-foreground flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-primary" /> Empresa de envío (Courier)
+                  </p>
+                  <div>
+                    <Label htmlFor="p-courier">Selecciona el courier</Label>
+                    <select id="p-courier" value={courier} onChange={(e) => { setCourier(e.target.value as Courier); setSelectedEstado(""); setSelectedOffice(""); setOtroEmpresa(""); setOtroEstado(""); setOtroDireccion(""); setCustomOfficeText(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                      <option value="">Selecciona una empresa</option>
+                      {COURIERS.map((c) => (<option key={c} value={c}>{c === "Otro" ? "Otro (Especificar)" : c}</option>))}
+                    </select>
+                  </div>
+
+                  {isMRW && (
+                    <>
+                      <div>
+                        <Label>Estado</Label>
+                        <select value={selectedEstado} onChange={(e) => { setSelectedEstado(e.target.value); setSelectedOffice(""); setCustomOfficeText(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                          <option value="">Selecciona un estado</option>
+                          {VENEZUELA_STATES.map((e) => (<option key={e} value={e}>{e}</option>))}
+                        </select>
+                      </div>
+                      {selectedEstado && (
+                        <div>
+                          <Label>Sede MRW</Label>
+                          <select value={selectedOffice} onChange={(e) => { setSelectedOffice(e.target.value); setCustomOfficeText(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                            <option value="">Selecciona una sede</option>
+                            {offices.map((o) => (<option key={o.codigo} value={o.codigo}>{o.nombre}</option>))}
+                            <option value={CUSTOM_OFFICE_VALUE}>Otra sede (escribir manualmente)</option>
+                          </select>
+                        </div>
+                      )}
+                      {selectedOffice === CUSTOM_OFFICE_VALUE && (
+                        <div>
+                          <Label>Escribe la sede de MRW</Label>
+                          <Input value={customOfficeText} onChange={(e) => setCustomOfficeText(e.target.value)} required placeholder="Nombre y dirección de la sede" />
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {isOtherKnownCourier && (() => {
+                    const courierKey = COURIER_KEY_MAP[courier];
+                    const courierOffices = otroEstado ? getCourierOffices(courierKey, otroEstado) : [];
+                    return (
+                      <div className="space-y-3 rounded-lg border border-primary/20 bg-accent/30 p-3">
+                        <div>
+                          <Label>Estado</Label>
+                          <select value={otroEstado} onChange={(e) => { setOtroEstado(e.target.value); setOtroDireccion(""); setCustomOfficeText(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                            <option value="">Selecciona un estado</option>
+                            {VENEZUELA_STATES.map((s) => (<option key={s} value={s}>{s}</option>))}
+                          </select>
+                        </div>
+                        {otroEstado && (
+                          <div>
+                            <Label>Sede de {courier}</Label>
+                            <select value={otroDireccion} onChange={(e) => { setOtroDireccion(e.target.value); setCustomOfficeText(""); }} required className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                              <option value="">Selecciona una sede</option>
+                              {courierOffices.map((o, idx) => (<option key={`${o.name}-${idx}`} value={`${o.name} — ${o.address}`}>{o.name}</option>))}
+                              <option value={CUSTOM_OFFICE_VALUE}>Otra sede (escribir manualmente)</option>
+                            </select>
+                          </div>
+                        )}
+                        {otroDireccion === CUSTOM_OFFICE_VALUE && (
+                          <div>
+                            <Label>Escribe la sede de {courier}</Label>
+                            <Input value={customOfficeText} onChange={(e) => setCustomOfficeText(e.target.value)} required placeholder="Nombre y dirección de la sede" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {isOtro && (
+                    <div className="space-y-3 rounded-lg border border-primary/30 bg-primary/5 p-3">
+                      <div><Label>Empresa de envío</Label><Input value={otroEmpresa} onChange={(e) => setOtroEmpresa(e.target.value)} required placeholder="Ej: Tealca, Domesa" /></div>
+                      <div><Label>Estado</Label><Input value={otroEstado} onChange={(e) => setOtroEstado(e.target.value)} required /></div>
+                      <div><Label>Sede / Dirección</Label><Input value={otroDireccion} onChange={(e) => setOtroDireccion(e.target.value)} required /></div>
+                    </div>
+                  )}
+                </div>
+
+                <Button type="submit" className="w-full bg-primary hover:bg-citric-dark text-primary-foreground font-semibold rounded-full" size="lg">
+                  Continuar a PayPal
+                </Button>
+              </form>
+            ) : (
+              <div className="space-y-4 mt-2">
+                <div className="bg-accent/40 rounded-lg p-3 text-xs text-muted-foreground space-y-1">
+                  <p><strong className="text-foreground">{paypalCustomer.name}</strong> · {paypalCustomer.email}</p>
+                  <p>{paypalCustomer.phone} · C.I: {formatCedula(paypalCedulaTipo, paypalCustomer.cedula.trim())}</p>
+                  <p>{paypalCustomer.address}</p>
+                  <p className="pt-1 border-t border-border/40">{buildShippingPayload().summary}</p>
+                  <button type="button" onClick={() => setPaypalDataReady(false)} className="text-primary font-medium underline mt-1">Editar datos</button>
+                </div>
+
+                {!paypalClientId ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">Cargando PayPal...</p>
+                ) : (
+                  <PayPalCheckout
+                    clientId={paypalClientId}
+                    customer={{
+                      name: paypalCustomer.name,
+                      email: paypalCustomer.email,
+                      phone: paypalCustomer.phone,
+                      address: `${paypalCustomer.address} | C.I: ${formatCedula(paypalCedulaTipo, paypalCustomer.cedula.trim())}`,
+                    }}
+                    shipping={buildShippingPayload()}
+                    items={items.map((i) => ({ id: i.id, name: i.name, priceUSD: i.priceUSD, quantity: i.quantity, image: i.image }))}
+                    onApproved={() => {
+                      toast.success("¡Pago con PayPal exitoso! Te contactaremos pronto.");
+                      clearCart();
+                      setSuccess(true);
+                    }}
+                  />
+                )}
+
+                <p className="text-xs text-muted-foreground text-center">
+                  Procesado de forma segura por PayPal en USD.
+                </p>
+              </div>
+            )}
           </>
         ) : (
           <>
