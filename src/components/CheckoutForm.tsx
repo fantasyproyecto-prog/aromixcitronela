@@ -89,16 +89,36 @@ const CheckoutForm = () => {
         return;
       }
     } else if (isMRW) {
+      if (!selectedEstado) {
+        toast.error("Selecciona el estado de destino");
+        return;
+      }
       if (!selectedOffice) {
         toast.error("Selecciona la sede de MRW de destino");
         return;
       }
-    } else {
-      // Liberty Express, Zoom, DHL
-      if (!otroEstado.trim() || !otroDireccion.trim()) {
-        toast.error(`Indica el estado y la sede de ${courier}`);
+      if (selectedOffice === CUSTOM_OFFICE_VALUE && !customOfficeText.trim()) {
+        toast.error("Escribe la sede de MRW donde quieres recibir el pedido");
         return;
       }
+    } else {
+      // Liberty Express, Zoom, DHL
+      if (!otroEstado.trim()) {
+        toast.error(`Indica el estado de ${courier}`);
+        return;
+      }
+      if (!otroDireccion.trim()) {
+        toast.error(`Indica la sede de ${courier}`);
+        return;
+      }
+      if (otroDireccion === CUSTOM_OFFICE_VALUE && !customOfficeText.trim()) {
+        toast.error(`Escribe la sede de ${courier} donde quieres recibir el pedido`);
+        return;
+      }
+    }
+    if (!cedula.trim()) {
+      toast.error("Indica tu cédula de identidad (la solicitan las empresas de envío)");
+      return;
     }
     if (!receiptFile) {
       toast.error("Adjunta el capture del comprobante de pago");
