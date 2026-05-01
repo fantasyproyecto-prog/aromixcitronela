@@ -43,8 +43,8 @@ const DistributorForms = () => {
     return () => window.removeEventListener("hashchange", applyHash);
   }, []);
 
-  const checkRateLimit = (): boolean => {
-    const lastSend = sessionStorage.getItem(RATE_LIMIT_KEY);
+  const checkRateLimit = (key: WholesaleTab): boolean => {
+    const lastSend = sessionStorage.getItem(RATE_LIMIT_KEYS[key]);
     if (lastSend && Date.now() - Number(lastSend) < RATE_LIMIT_MS) {
       toast.error("Ya hemos recibido tu solicitud. Por favor espera unos minutos antes de enviar otra.");
       return false;
