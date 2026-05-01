@@ -347,7 +347,9 @@ const CheckoutForm = () => {
       setOtroDireccion("");
       setBancoEmisor("");
       setFechaPago("");
-      setStripeCustomer({ name: "", email: "", phone: "", address: "" });
+      setCedula("");
+      setCustomOfficeText("");
+      setStripeCustomer({ name: "", email: "", phone: "", address: "", cedula: "" });
       removeReceipt();
     }
   };
