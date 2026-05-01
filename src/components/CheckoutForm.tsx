@@ -198,7 +198,7 @@ const CheckoutForm = () => {
             email: emailCliente || "No proporcionado",
             phone: telCliente,
             address: dirCliente,
-            cedula: cedula.trim(),
+            cedula: formatCedula(cedulaTipo, cedula.trim()),
             shipping: shipping_address,
             shippingCourier: courier,
             shippingIsOther: isOtro,
