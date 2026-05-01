@@ -27,6 +27,10 @@ type PaymentMethod = "pago-movil" | "stripe" | null;
 type Courier = "MRW" | "Liberty Express" | "Zoom" | "DHL" | "Otro" | "";
 const COURIERS: Exclude<Courier, "">[] = ["MRW", "Liberty Express", "Zoom", "DHL", "Otro"];
 
+// Validación de cédula venezolana: 6 a 9 dígitos
+const isValidCedulaNumber = (digits: string) => /^\d{6,9}$/.test(digits);
+const formatCedula = (tipo: "V" | "E", digits: string) => `${tipo}-${digits}`;
+
 const CheckoutForm = () => {
   const { isCheckoutOpen, setIsCheckoutOpen, totalUSD, totalBs, tasaBCV, tasaLoading, clearCart, items } = useCart();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
@@ -38,11 +42,13 @@ const CheckoutForm = () => {
   const [otroDireccion, setOtroDireccion] = useState("");
   const [bancoEmisor, setBancoEmisor] = useState("");
   const [fechaPago, setFechaPago] = useState("");
-  const [cedula, setCedula] = useState("");
+  const [cedulaTipo, setCedulaTipo] = useState<"V" | "E">("V");
+  const [cedula, setCedula] = useState(""); // solo dígitos
   const [customOfficeText, setCustomOfficeText] = useState(""); // sede escrita manualmente
   const [sending, setSending] = useState(false);
   const [success, setSuccess] = useState(false);
   const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeCedulaTipo, setStripeCedulaTipo] = useState<"V" | "E">("V");
   const [stripeCustomer, setStripeCustomer] = useState({ name: "", email: "", phone: "", address: "", cedula: "" });
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
@@ -116,8 +122,8 @@ const CheckoutForm = () => {
         return;
       }
     }
-    if (!cedula.trim()) {
-      toast.error("Indica tu cédula de identidad (la solicitan las empresas de envío)");
+    if (!isValidCedulaNumber(cedula.trim())) {
+      toast.error("Cédula inválida. Debe tener entre 6 y 9 dígitos (ej: V-12345678)");
       return;
     }
     if (!receiptFile) {
@@ -192,7 +198,7 @@ const CheckoutForm = () => {
             email: emailCliente || "No proporcionado",
             phone: telCliente,
             address: dirCliente,
-            cedula: cedula.trim(),
+            cedula: formatCedula(cedulaTipo, cedula.trim()),
             shipping: shipping_address,
             shippingCourier: courier,
             shippingIsOther: isOtro,
@@ -221,7 +227,7 @@ const CheckoutForm = () => {
                 name: nombreCliente,
                 shipping: shipping_address,
                 address: dirCliente,
-                cedula: cedula.trim(),
+                cedula: formatCedula(cedulaTipo, cedula.trim()),
                 reference: referencia,
                 bank: bancoEmisor.trim(),
                 paymentDate: fechaPago,
@@ -298,8 +304,8 @@ const CheckoutForm = () => {
       toast.error("Completa todos los datos de envío");
       return;
     }
-    if (!stripeCustomer.cedula.trim()) {
-      toast.error("Indica tu cédula de identidad (la solicitan las empresas de envío)");
+    if (!isValidCedulaNumber(stripeCustomer.cedula.trim())) {
+      toast.error("Cédula inválida. Debe tener entre 6 y 9 dígitos (ej: V-12345678)");
       return;
     }
     if (!validateShipping()) return;
@@ -314,7 +320,7 @@ const CheckoutForm = () => {
         body: {
           customer: {
             ...stripeCustomer,
-            address: `${stripeCustomer.address} | C.I: ${stripeCustomer.cedula.trim()}`,
+            address: `${stripeCustomer.address} | C.I: ${formatCedula(stripeCedulaTipo, stripeCustomer.cedula.trim())}`,
           },
           shipping,
           items: items.map((i) => ({ id: i.id, name: i.name, priceUSD: i.priceUSD, quantity: i.quantity, image: i.image })),
@@ -360,6 +366,8 @@ const CheckoutForm = () => {
       setBancoEmisor("");
       setFechaPago("");
       setCedula("");
+      setCedulaTipo("V");
+      setStripeCedulaTipo("V");
       setCustomOfficeText("");
       setStripeCustomer({ name: "", email: "", phone: "", address: "", cedula: "" });
       removeReceipt();
@@ -470,8 +478,36 @@ const CheckoutForm = () => {
               <div><Label htmlFor="s-dir">Dirección de envío</Label><Input id="s-dir" value={stripeCustomer.address} onChange={(e) => setStripeCustomer((c) => ({ ...c, address: e.target.value }))} required /></div>
               <div>
                 <Label htmlFor="s-cedula">Cédula de identidad</Label>
-                <Input id="s-cedula" value={stripeCustomer.cedula} onChange={(e) => setStripeCustomer((c) => ({ ...c, cedula: e.target.value }))} required placeholder="Ej: V-12345678" />
-                <p className="text-xs text-muted-foreground mt-1">Las empresas de envío la solicitan al despachar.</p>
+                <div className="flex gap-2">
+                  <select
+                    aria-label="Tipo de cédula"
+                    value={stripeCedulaTipo}
+                    onChange={(e) => setStripeCedulaTipo(e.target.value as "V" | "E")}
+                    className="h-10 rounded-md border border-input bg-background px-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="V">V (Venezolano)</option>
+                    <option value="E">E (Extranjero)</option>
+                  </select>
+                  <Input
+                    id="s-cedula"
+                    inputMode="numeric"
+                    pattern="\d*"
+                    maxLength={9}
+                    value={stripeCustomer.cedula}
+                    onChange={(e) =>
+                      setStripeCustomer((c) => ({
+                        ...c,
+                        cedula: e.target.value.replace(/\D/g, "").slice(0, 9),
+                      }))
+                    }
+                    required
+                    placeholder="12345678"
+                    className="flex-1"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Las empresas de envío la solicitan al despachar. Selecciona <strong>V</strong> si eres venezolano o <strong>E</strong> si eres extranjero.
+                </p>
               </div>
 
               <Separator />
@@ -607,8 +643,31 @@ const CheckoutForm = () => {
               <div><Label htmlFor="c-dir">Dirección de envío</Label><Input id="c-dir" name="c-dir" required /></div>
               <div>
                 <Label htmlFor="c-cedula">Cédula de identidad</Label>
-                <Input id="c-cedula" value={cedula} onChange={(e) => setCedula(e.target.value)} required placeholder="Ej: V-12345678" />
-                <p className="text-xs text-muted-foreground mt-1">Las empresas de envío la solicitan al despachar.</p>
+                <div className="flex gap-2">
+                  <select
+                    aria-label="Tipo de cédula"
+                    value={cedulaTipo}
+                    onChange={(e) => setCedulaTipo(e.target.value as "V" | "E")}
+                    className="h-10 rounded-md border border-input bg-background px-3 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="V">V (Venezolano)</option>
+                    <option value="E">E (Extranjero)</option>
+                  </select>
+                  <Input
+                    id="c-cedula"
+                    inputMode="numeric"
+                    pattern="\d*"
+                    maxLength={9}
+                    value={cedula}
+                    onChange={(e) => setCedula(e.target.value.replace(/\D/g, "").slice(0, 9))}
+                    required
+                    placeholder="12345678"
+                    className="flex-1"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Las empresas de envío la solicitan al despachar. Selecciona <strong>V</strong> si eres venezolano o <strong>E</strong> si eres extranjero.
+                </p>
               </div>
 
               <Separator />
