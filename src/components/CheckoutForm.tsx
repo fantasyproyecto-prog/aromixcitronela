@@ -27,6 +27,10 @@ type PaymentMethod = "pago-movil" | "stripe" | null;
 type Courier = "MRW" | "Liberty Express" | "Zoom" | "DHL" | "Otro" | "";
 const COURIERS: Exclude<Courier, "">[] = ["MRW", "Liberty Express", "Zoom", "DHL", "Otro"];
 
+// Validación de cédula venezolana: 6 a 9 dígitos
+const isValidCedulaNumber = (digits: string) => /^\d{6,9}$/.test(digits);
+const formatCedula = (tipo: "V" | "E", digits: string) => `${tipo}-${digits}`;
+
 const CheckoutForm = () => {
   const { isCheckoutOpen, setIsCheckoutOpen, totalUSD, totalBs, tasaBCV, tasaLoading, clearCart, items } = useCart();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(null);
