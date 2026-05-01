@@ -55,6 +55,24 @@ const CheckoutForm = () => {
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // PayPal
+  const [paypalClientId, setPaypalClientId] = useState<string | null>(null);
+  const [paypalCedulaTipo, setPaypalCedulaTipo] = useState<"V" | "E">("V");
+  const [paypalCustomer, setPaypalCustomer] = useState({ name: "", email: "", phone: "", address: "", cedula: "" });
+  const [paypalDataReady, setPaypalDataReady] = useState(false);
+
+  useEffect(() => {
+    if (paymentMethod !== "paypal" || paypalClientId) return;
+    supabase.functions.invoke("paypal-config").then(({ data, error }) => {
+      if (error || !data?.clientId) {
+        console.error("paypal-config error:", error);
+        toast.error("No se pudo cargar PayPal");
+        return;
+      }
+      setPaypalClientId(data.clientId as string);
+    });
+  }, [paymentMethod, paypalClientId]);
+
   const isOtro = courier === "Otro";
   const isMRW = courier === "MRW";
   const isOtherKnownCourier = courier !== "" && !isOtro && !isMRW; // Liberty, Zoom, DHL
