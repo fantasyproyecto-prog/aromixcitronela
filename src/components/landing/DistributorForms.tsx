@@ -132,7 +132,7 @@ const DistributorForms = () => {
     await submitWholesaleLead({
       formOrigin: "Quiero emprender",
       replyTo: email,
-      successMessage: "¡Solicitud enviada con éxito! Nos pondremos en contacto contigo pronto.",
+      successMessage: "¡Cotización solicitada! Te contactaremos pronto.",
       fields: [
         { label: "Nombre completo", value: nombre },
         { label: "Email", value: email },
