@@ -200,9 +200,6 @@ const CheckoutForm = () => {
         .from("payment-receipts")
         .upload(filePath, receiptFile, { contentType: receiptFile.type, upsert: false });
       if (upErr) throw upErr;
-      const { data: pub } = supabase.storage.from("payment-receipts").getPublicUrl(filePath);
-      const receiptUrl = pub.publicUrl;
-
       const itemsPayload = items.map((i) => ({ name: i.name, qty: i.quantity, price: i.priceUSD }));
       const totalLabel = `$${totalUSD.toFixed(2)} / Bs ${totalBs.toFixed(2)}`;
 
@@ -229,7 +226,6 @@ const CheckoutForm = () => {
             paymentDate: fechaPago,
             items: itemsPayload,
             total: totalLabel,
-            receiptUrl,
           },
         },
       });
@@ -1056,7 +1052,7 @@ const CheckoutForm = () => {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp,application/pdf"
                   onChange={handleFileChange}
                   className="hidden"
                   id="receipt-file"

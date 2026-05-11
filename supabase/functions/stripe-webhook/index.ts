@@ -95,6 +95,7 @@ Deno.serve(async (req) => {
         // 1) Correo a Logística (Aromix.pa@gmail.com)
         try {
           const { error: fnErr } = await supabase.functions.invoke("send-aromix-email", {
+            headers: { "x-internal-email-token": SUPABASE_SERVICE_ROLE_KEY },
             body: {
               type: "checkout",
               replyTo: order.customer_email,
@@ -111,6 +112,7 @@ Deno.serve(async (req) => {
         // 2) Correo de confirmación al Cliente
         try {
           const { error: fnErr } = await supabase.functions.invoke("send-aromix-email", {
+            headers: { "x-internal-email-token": SUPABASE_SERVICE_ROLE_KEY },
             body: {
               type: "customer_checkout",
               to: order.customer_email,
