@@ -113,13 +113,11 @@ const StripeReturnHandler = () => {
       while (!cancelled && attempts < maxAttempts) {
         attempts++;
         try {
-          const { data, error } = await supabase
-            .from("orders")
-            .select("status")
-            .eq("id", pendingOrderId)
-            .maybeSingle();
+          const { data, error } = await supabase.functions.invoke("get-order-status", {
+            body: { orderId: pendingOrderId },
+          });
 
-          if (!error && data?.status === "paid") {
+          if (!error && (data as { status?: string } | null)?.status === "paid") {
             showSuccess();
             return;
           }
