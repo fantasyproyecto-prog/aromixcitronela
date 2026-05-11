@@ -7,6 +7,64 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const FROM = "Aromix Citronela <pedidos@aromixcitronela.com>";
 const DEFAULT_TO = "Aromix.pa@gmail.com";
 
+const ALLOWED_ORIGINS = new Set([
+  "https://aromixcitronela.lovable.app",
+  "https://id-preview--2b6486c0-8c37-4f47-a9e7-67f09f28ab53.lovable.app",
+]);
+const getCorsHeaders = (req: Request) => {
+  const origin = req.headers.get("origin") ?? "";
+  const allowedOrigin = ALLOWED_ORIGINS.has(origin) || /^https:\/\/[a-z0-9-]+--2b6486c0-8c37-4f47-a9e7-67f09f28ab53\.lovable\.app$/i.test(origin)
+    ? origin
+    : "https://aromixcitronela.lovable.app";
+  return { ...corsHeaders, "Access-Control-Allow-Origin": allowedOrigin, "Vary": "Origin" };
+};
+const isInternalRequest = (req: Request) => {
+  const expected = Deno.env.get("EMAIL_FUNCTION_TOKEN") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  return Boolean(expected && req.headers.get("x-internal-email-token") === expected);
+};
+const normalizeEmail = (value: unknown) => String(value ?? "").trim().toLowerCase();
+const isEmail = (value: unknown) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value ?? "").trim());
+const cleanText = (value: unknown, max = 500) => String(value ?? "").replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, max);
+const sanitizeItems = (items: unknown) => Array.isArray(items)
+  ? items.slice(0, 20).map((i: any) => ({ name: cleanText(i?.name, 160), qty: Math.max(1, Math.min(99, Number(i?.qty || 1))), price: Math.max(0, Math.min(100000, Number(i?.price || 0))) }))
+  : [];
+const sanitizeData = (type: string, data: Record<string, any>) => ({
+  ...data,
+  name: cleanText(data.name, 120),
+  email: cleanText(data.email, 255),
+  phone: cleanText(data.phone, 40),
+  address: cleanText(data.address, 1000),
+  cedula: cleanText(data.cedula, 20),
+  shipping: cleanText(data.shipping, 1200),
+  shippingCourier: cleanText(data.shippingCourier, 80),
+  reference: cleanText(data.reference, 120),
+  bank: cleanText(data.bank, 80),
+  paymentDate: cleanText(data.paymentDate, 30),
+  total: cleanText(data.total, 80),
+  paymentMethod: cleanText(data.paymentMethod, 80),
+  formOrigin: cleanText(data.formOrigin, 80),
+  fields: Array.isArray(data.fields) ? data.fields.slice(0, 12).map((f: any) => ({ label: cleanText(f?.label, 80), value: cleanText(f?.value, 1000) })) : undefined,
+  items: sanitizeItems(data.items),
+});
+const publicSafeTypes = new Set(["checkout", "customer_pago_movil", "wholesale_lead"]);
+function authorizeEmailRequest(req: Request, payload: any) {
+  if (isInternalRequest(req)) return { ok: true, headers: getCorsHeaders(req), internal: true };
+  const origin = req.headers.get("origin") ?? "";
+  if (!ALLOWED_ORIGINS.has(origin) && !/^https:\/\/[a-z0-9-]+--2b6486c0-8c37-4f47-a9e7-67f09f28ab53\.lovable\.app$/i.test(origin)) {
+    return { ok: false, status: 403, error: "Origen no autorizado", headers: getCorsHeaders(req), internal: false };
+  }
+  if (!publicSafeTypes.has(payload?.type)) {
+    return { ok: false, status: 403, error: "Tipo no autorizado", headers: getCorsHeaders(req), internal: false };
+  }
+  if (payload?.to && payload.type !== "customer_pago_movil") {
+    return { ok: false, status: 403, error: "Destinatario no autorizado", headers: getCorsHeaders(req), internal: false };
+  }
+  if (payload?.type === "customer_pago_movil" && normalizeEmail(payload?.to) !== normalizeEmail(payload?.data?.email || payload?.to)) {
+    return { ok: false, status: 403, error: "Destinatario no autorizado", headers: getCorsHeaders(req), internal: false };
+  }
+  return { ok: true, headers: getCorsHeaders(req), internal: false };
+}
+
 const BRAND_GREEN = "#7AB317";
 const BRAND_DARK = "#2D4A0F";
 
@@ -227,23 +285,34 @@ async function deleteReceipt(path: string) {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+  const dynamicCorsHeaders = getCorsHeaders(req);
+  if (req.method === "OPTIONS") return new Response("ok", { headers: dynamicCorsHeaders });
 
   try {
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY no configurada");
 
-    const { type, data, replyTo, receiptPath, to } = await req.json();
+    const payload = await req.json();
+    const authz = authorizeEmailRequest(req, payload);
+    if (!authz.ok) {
+      return new Response(JSON.stringify({ error: authz.error }), {
+        status: authz.status ?? 403, headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const { type, replyTo, receiptPath, to } = payload;
+    const data = sanitizeData(type, payload.data ?? {});
     if (!type || !data) {
       return new Response(JSON.stringify({ error: "type y data son requeridos" }), {
-        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
     // Si hay comprobante, descárgalo y adjúntalo (así no depende de la URL pública)
     let attachments: Array<{ filename: string; content: string }> | undefined;
-    if (data.receiptUrl) {
+    if (receiptPath) {
       try {
-        const imgRes = await fetch(data.receiptUrl);
+        const imgRes = await fetch(`${SUPABASE_URL}/storage/v1/object/payment-receipts/${receiptPath}`, {
+          headers: { Authorization: `Bearer ${SERVICE_KEY}`, apikey: SERVICE_KEY },
+        });
         if (imgRes.ok) {
           const buf = new Uint8Array(await imgRes.arrayBuffer());
           let bin = "";
@@ -260,7 +329,10 @@ Deno.serve(async (req) => {
     }
 
     const { subject, html } = buildHtml(type, data);
-    const recipients = Array.isArray(to) ? to : (to ? [to] : [DEFAULT_TO]);
+    const requestedRecipients = Array.isArray(to) ? to : (to ? [to] : [DEFAULT_TO]);
+    const recipients = authz.internal
+      ? requestedRecipients.filter(isEmail).slice(0, 3)
+      : (type === "customer_pago_movil" && isEmail(to) ? [String(to).trim()] : [DEFAULT_TO]);
 
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -276,7 +348,7 @@ Deno.serve(async (req) => {
     if (!res.ok) {
       console.error("Resend error:", result);
       return new Response(JSON.stringify({ error: result }), {
-        status: res.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: res.status, headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -284,12 +356,12 @@ Deno.serve(async (req) => {
     if (receiptPath) await deleteReceipt(receiptPath);
 
     return new Response(JSON.stringify({ ok: true, id: result.id }), {
-      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 200, headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
     console.error("send-aromix-email error:", err);
     return new Response(JSON.stringify({ error: (err as Error).message }), {
-      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
     });
   }
 });

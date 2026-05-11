@@ -43,6 +43,7 @@ async function sendOrderEmails(supabase: any, orderId: string, reference: string
 
   try {
     const { error } = await supabase.functions.invoke("send-aromix-email", {
+      headers: { "x-internal-email-token": Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")! },
       body: { type: "checkout", replyTo: order.customer_email, to: "Aromix.pa@gmail.com", data: baseData },
     });
     if (error) console.error("Email logística error:", error); else logisticsOk = true;
@@ -50,6 +51,7 @@ async function sendOrderEmails(supabase: any, orderId: string, reference: string
 
   try {
     const { error } = await supabase.functions.invoke("send-aromix-email", {
+      headers: { "x-internal-email-token": Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")! },
       body: { type: "customer_checkout", to: order.customer_email, data: baseData },
     });
     if (error) console.error("Email cliente error:", error); else customerOk = true;
