@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Anon can upload payment receipts (restricted)" ON storage.objects;
