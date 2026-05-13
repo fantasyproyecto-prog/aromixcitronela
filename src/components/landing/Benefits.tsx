@@ -1,12 +1,13 @@
-import { Bug, Cog, Smile, Sparkles, Wrench, DollarSign } from "lucide-react";
+import { Bug, Cog, Smile, Sparkles, Wrench, Timer, Eye } from "lucide-react";
 
 const benefits = [
-  { icon: Bug, title: "Eliminación efectiva de moscas y zancudos" },
-  { icon: Cog, title: "Funcionamiento automático sin intervención constante" },
+  { icon: Bug, title: "Ayuda a disminuir las molestias ocasionadas por insectos voladores" },
+  { icon: Cog, title: "Funcionamiento automático programable" },
   { icon: Smile, title: "Mejora la experiencia del cliente" },
-  { icon: Sparkles, title: "Mantiene espacios limpios y agradables" },
+  { icon: Sparkles, title: "Ideal para áreas de atención al público" },
   { icon: Wrench, title: "Fácil instalación y uso" },
-  { icon: DollarSign, title: "Solución económica y de alta eficiencia" },
+  { icon: Timer, title: "Bajo mantenimiento" },
+  { icon: Eye, title: "Diseño práctico y discreto" },
 ];
 
 const Benefits = () => (
