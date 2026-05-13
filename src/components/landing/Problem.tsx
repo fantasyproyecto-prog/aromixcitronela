@@ -6,9 +6,9 @@ const Problem = () => (
       <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-destructive/10 mb-2">
         <AlertTriangle className="h-7 w-7 text-destructive" />
       </div>
-      <h2 className="text-3xl md:text-4xl font-bold text-foreground">¿Moscas en tu negocio?</h2>
+      <h2 className="text-3xl md:text-4xl font-bold text-foreground">La experiencia de tus clientes comienza con el ambiente.</h2>
       <p className="text-lg text-muted-foreground leading-relaxed max-w-3xl mx-auto">
-        La presencia de insectos afecta directamente la higiene, la experiencia del cliente y la reputación de tu negocio. Una sola mosca puede arruinar por completo la percepción de tu local, generando incomodidad y pérdida de confianza.
+        Los espacios agradables, cómodos y bien cuidados generan una mejor percepción de tu negocio. Aromix te ayuda a mantener una experiencia ambiental continua para tus clientes durante todo el día.
       </p>
     </div>
   </section>

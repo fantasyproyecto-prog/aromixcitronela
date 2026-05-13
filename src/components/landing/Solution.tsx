@@ -15,12 +15,9 @@ const Solution = () => (
       </div>
       <div className="space-y-5">
         <span className="text-sm font-semibold text-primary-foreground/80 uppercase tracking-wider">La solución</span>
-        <h2 className="text-2xl md:text-4xl font-bold text-primary-foreground">La solución automática</h2>
+        <h2 className="text-2xl md:text-4xl font-bold text-primary-foreground">Ambientación automática y continua</h2>
         <p className="text-base md:text-lg text-primary-foreground/90 leading-relaxed">
-          Aromix Citronela es un sistema automático que libera una fórmula natural repelente en intervalos programados, manteniendo tu espacio protegido durante todo el día sin esfuerzo.
-        </p>
-        <p className="text-primary-foreground/80 leading-relaxed">
-          Olvídate de soluciones manuales y mantén un ambiente limpio de forma continua.
+          Aromix libera su fórmula de citronela en intervalos programados para ayudar a mantener espacios más confortables y agradables en áreas donde suelen presentarse moscas y zancudos. Ideal para negocios que desean ofrecer una mejor experiencia ambiental sin complicaciones.
         </p>
       </div>
     </div>

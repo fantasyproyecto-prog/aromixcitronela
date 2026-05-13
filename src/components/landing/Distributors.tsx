@@ -9,7 +9,7 @@ const Distributors = () => (
       </div>
       <h2 className="text-3xl md:text-4xl font-bold">¿Quieres ser distribuidor?</h2>
       <p className="text-lg text-muted-foreground leading-relaxed">
-        Forma parte de nuestra red de aliados y genera ingresos con un producto de alta demanda en el mercado.
+        Forma parte de nuestra red de aliados comerciales y ofrece una solución práctica para negocios y espacios comerciales.
       </p>
       <Button asChild size="lg" className="bg-primary hover:bg-citric-dark text-primary-foreground font-semibold px-10 rounded-full">
         <a href="#formularios-mayorista">Quiero ser Distribuidor</a>

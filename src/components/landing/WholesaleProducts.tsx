@@ -32,7 +32,7 @@ const WholesaleProducts = () => {
           Presentaciones para Emprendedores y Distribuidores
         </h2>
         <p className="text-center text-muted-foreground mb-8 md:mb-12 max-w-2xl mx-auto">
-          ¿Quieres revender o distribuir Aromix Citronela? Llena el formulario y te enviaremos tu cotización al mayor.
+          ¿Deseas incorporar Aromix a tu negocio o distribución? Solicita información sobre nuestras presentaciones al mayor.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto">
           {wholesaleProducts.map((p) => (

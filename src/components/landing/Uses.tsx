@@ -1,10 +1,12 @@
-import { UtensilsCrossed, CakeSlice, Coffee, Store, Home } from "lucide-react";
+import { UtensilsCrossed, CakeSlice, Coffee, Store, Home, Building2, Briefcase } from "lucide-react";
 
 const uses = [
   { icon: UtensilsCrossed, label: "Restaurantes" },
   { icon: CakeSlice, label: "Panaderías" },
-  { icon: Coffee, label: "Cafés" },
-  { icon: Store, label: "Comercios en general" },
+  { icon: Coffee, label: "Cafeterías" },
+  { icon: Store, label: "Terrazas" },
+  { icon: Building2, label: "Locales comerciales" },
+  { icon: Briefcase, label: "Oficinas" },
   { icon: Home, label: "Hogares" },
 ];
 

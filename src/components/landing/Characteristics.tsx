@@ -23,7 +23,7 @@ const Characteristics = () => (
         ))}
       </div>
       <p className="text-center text-muted-foreground mt-10 text-sm">
-        Diseñado para brindar protección constante con el menor esfuerzo.
+        Diseñado para acompañar tu negocio todos los días.
       </p>
     </div>
   </section>
