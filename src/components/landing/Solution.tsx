@@ -8,6 +8,7 @@ const Solution = () => (
           src={dispensadorImg}
           alt="Dispensador SA 2000"
           loading="lazy"
+          decoding="async"
           width={400}
           height={400}
           className="w-full max-w-md mx-auto h-auto object-contain drop-shadow-2xl"

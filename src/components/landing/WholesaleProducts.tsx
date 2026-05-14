@@ -48,6 +48,7 @@ const WholesaleProducts = () => {
                   src={p.image}
                   alt={p.name}
                   loading="lazy"
+                  decoding="async"
                   width={260}
                   height={260}
                   className="max-h-44 md:max-h-52 object-contain mix-blend-multiply"
