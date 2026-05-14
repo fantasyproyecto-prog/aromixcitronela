@@ -5,7 +5,7 @@ import heroBg from "@/assets/hero-bg.jpg";
 const Hero = () => (
   <section id="hero" className="relative min-h-screen flex items-center pt-16 overflow-hidden">
     <div className="absolute inset-0">
-      <img src={heroBg} alt="Parque verde con luz natural" className="w-full h-full object-cover" width={1920} height={900} />
+      <img src={heroBg} alt="Parque verde con luz natural" className="w-full h-full object-cover" width={1920} height={900} loading="eager" fetchPriority="high" decoding="async" />
       <div className="absolute inset-0 bg-foreground/65" />
     </div>
 
