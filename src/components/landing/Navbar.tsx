@@ -25,6 +25,11 @@ const Navbar = () => {
           <img
             src={aromixLogo}
             alt="Aromix Citronela"
+            loading="eager"
+            decoding="async"
+            fetchPriority="high"
+            width={160}
+            height={80}
             className="h-14 md:h-20 w-auto object-contain block -mt-1"
           />
         </a>
