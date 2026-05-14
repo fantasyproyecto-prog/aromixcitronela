@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { MessageCircle } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const ClosingFooter = () => (
   <section className="section-padding bg-foreground text-background">
@@ -20,8 +21,16 @@ const ClosingFooter = () => (
         </Button>
       </div>
     </div>
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 pt-8 border-t border-background/10 text-center text-background/50 text-sm">
-      © 2026 Aromix. Todos los derechos reservados.
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-16 pt-8 border-t border-background/10 text-center text-background/60 text-sm space-y-3">
+      <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+        <Link to="/privacidad" className="underline hover:text-primary transition-colors">
+          Política de Privacidad
+        </Link>
+        <Link to="/terminos" className="underline hover:text-primary transition-colors">
+          Términos y Condiciones
+        </Link>
+      </div>
+      <div className="text-background/50">© 2026 Aromix. Todos los derechos reservados.</div>
     </div>
   </section>
 );
