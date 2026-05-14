@@ -1,34 +1,29 @@
+# Plan: Páginas legales (Privacidad y Términos)
 
+## 1. Nuevo componente compartido `LegalPage`
+Crear `src/components/legal/LegalPage.tsx` — layout reutilizable, limpio y corporativo:
+- Fondo `bg-background`, contenedor central `max-w-4xl mx-auto`, padding generoso (`px-6 py-16 md:py-24`).
+- Botón "← Volver a la tienda" arriba (variant `outline`, `asChild` con `<Link to="/">`).
+- Título principal grande (`text-4xl md:text-5xl font-bold`) + subtítulo opcional.
+- Slot para `children` con tipografía legible (`prose`-like: `space-y-6`, `leading-relaxed`, `text-foreground/80`, encabezados `h2/h3` consistentes).
+- Footer mínimo con enlace de regreso.
 
-## Plan: Tienda B2C + Presentaciones B2B con fotos reales
+## 2. Página `/privacidad`
+Crear `src/pages/Privacy.tsx` usando `LegalPage`. Contenido: secciones 1–12 del documento (Introducción → Contacto), encabezadas como `<h2>` numerados.
 
-### Cambios
+## 3. Página `/terminos`
+Crear `src/pages/Terms.tsx` usando `LegalPage`. Contenido: "TÉRMINOS Y CONDICIONES BÁSICOS" puntos 1–6.
 
-**1. Copiar las 4 fotos de producto a `src/assets/`**
-- `user-uploads://Dispensador.jpg` -> `src/assets/dispensador-real.jpg`
-- `user-uploads://Lata.jpg` -> `src/assets/lata-real.jpg`
-- `user-uploads://Caja_de_12.jpg` -> `src/assets/caja-12.jpg`
-- `user-uploads://Caja_de_72.jpg` -> `src/assets/caja-72.jpg`
+## 4. Rutas
+Editar `src/App.tsx`: añadir `<Route path="/privacidad" element={<Privacy />} />` y `<Route path="/terminos" element={<Terms />} />` antes del catch-all.
 
-**2. Actualizar `src/components/landing/Shop.tsx` (B2C)**
-- Reemplazar las imágenes actuales por las fotos reales
-- Producto 1: "Dispensador Aromix Citronela + Lata" con `dispensador-real.jpg`
-- Producto 2: "Lata Refill Citronela" con `lata-real.jpg`
-- Mantener toda la lógica del carrito bimonetario sin cambios
+## 5. Footer
+Editar `src/components/landing/ClosingFooter.tsx`:
+- Añadir, justo encima o dentro del bloque de copyright, una fila de enlaces: "Política de Privacidad" → `/privacidad`, "Términos y Condiciones" → `/terminos`.
+- Usar `<Link>` de `react-router-dom` con estilo `underline hover:text-primary`.
+- Mantener todo el copy y diseño existentes intactos.
 
-**3. Crear `src/components/landing/WholesaleProducts.tsx` (B2B)**
-- Nueva sección con titulo "Presentaciones para Emprendedores y Distribuidores"
-- Dos tarjetas con diseño diferenciado: borde dorado/verde oscuro y badge "Venta al Mayor"
-- Producto 3: "Caja de 12 Unidades" con `caja-12.jpg`
-- Producto 4: "Caja Master de 72 Unidades" con `caja-72.jpg`
-- Sin precio visible, sin boton de carrito
-- Boton "Solicitar lista de precios" que hace smooth scroll a `#formularios`
-
-**4. Actualizar `src/pages/Index.tsx`**
-- Importar y colocar `WholesaleProducts` entre `Shop` y `Distributors`
-
-### Detalles tecnicos
-- Las tarjetas B2B usan `border-2 border-amber-500/60` para el borde dorado y un badge absoluto con fondo amber
-- El scroll suave se implementa con `document.getElementById('formularios')?.scrollIntoView({ behavior: 'smooth' })`
-- Las fotos se importan como ES6 modules desde `src/assets/`
-
+## Notas técnicas
+- Usar `react-router-dom` `Link` (ya instalado).
+- Sin cambios de lógica, datos, pagos ni estilos globales.
+- Añadir `<title>` por página vía `document.title` en un `useEffect` simple para SEO ligero.
