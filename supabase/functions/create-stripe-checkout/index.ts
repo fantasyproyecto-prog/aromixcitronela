@@ -142,18 +142,15 @@ Deno.serve(async (req) => {
   // 2. Crear sesión de Stripe Checkout
   const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2024-12-18.acacia" });
 
-  console.log("[create-stripe-checkout] order created", order.id, "items:", body.items.length);
+  console.log("[create-stripe-checkout] order created", order.id, "items:", trustedItems.length);
 
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
       customer_email: body.customer.email,
-      line_items: body.items.map((i) => {
+      line_items: trustedItems.map((i) => {
         const isAbsoluteUrl = typeof i.image === "string" && /^https?:\/\//i.test(i.image);
-        if (i.image && !isAbsoluteUrl) {
-          console.log(`Omitiendo imagen no-absoluta para "${i.name}": ${i.image}`);
-        }
         return {
           quantity: i.quantity,
           price_data: {
