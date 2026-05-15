@@ -113,7 +113,7 @@ Deno.serve(async (req) => {
   try {
     const accessToken = await getAccessToken(PAYPAL_CLIENT_ID, PAYPAL_SECRET);
 
-    const itemsTotal = body.items.reduce((s, i) => s + i.priceUSD * i.quantity, 0);
+    const itemsTotal = totalAmount;
 
     const ppRes = await fetch(`${PAYPAL_BASE}/v2/checkout/orders`, {
       method: "POST",
@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
         purchase_units: [{
           reference_id: order.id,
           custom_id: order.id,
-          description: `Pedido Aromix Citronela #${order.id.slice(0, 8)}`,
+          description: `Pedido Aromix #${order.id.slice(0, 8)}`,
           amount: {
             currency_code: "USD",
             value: itemsTotal.toFixed(2),
@@ -134,7 +134,7 @@ Deno.serve(async (req) => {
               item_total: { currency_code: "USD", value: itemsTotal.toFixed(2) },
             },
           },
-          items: body.items.map((i) => ({
+          items: trustedItems.map((i) => ({
             name: i.name.slice(0, 127),
             quantity: String(i.quantity),
             unit_amount: { currency_code: "USD", value: i.priceUSD.toFixed(2) },
