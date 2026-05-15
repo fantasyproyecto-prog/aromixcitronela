@@ -9,11 +9,20 @@ const corsHeaders = {
 
 interface ItemIn {
   id: string;
-  name: string;
-  priceUSD: number;
+  name?: string;
+  priceUSD?: number;
   quantity: number;
   image?: string;
 }
+
+// Authoritative server-side catalog. Client-supplied prices/names are ignored.
+const CATALOG: Record<string, { name: string; priceUSD: number }> = {
+  "dispensador": { name: "Dispensador Aromix", priceUSD: 22.0 },
+  "refill": { name: "Refill Aromix", priceUSD: 23.5 },
+  "combo-1": { name: "Combo 1 (Dispensador + Refill)", priceUSD: 44.0 },
+  "combo-4": { name: "Combo 4 Refills", priceUSD: 168.0 },
+  "combo-6": { name: "Combo 6 Refills", priceUSD: 234.0 },
+};
 
 interface Body {
   customer: {
