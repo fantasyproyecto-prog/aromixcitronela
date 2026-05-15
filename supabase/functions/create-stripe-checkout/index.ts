@@ -80,13 +80,24 @@ Deno.serve(async (req) => {
   if (!body.successUrl || !body.cancelUrl) {
     return bad(400, "URLs de redirección requeridas");
   }
+  // Server-side price recalculation: ignore client-supplied prices/names.
+  const trustedItems: Array<{ id: string; name: string; priceUSD: number; quantity: number; image?: string }> = [];
   for (const it of body.items) {
-    if (!it.name || typeof it.priceUSD !== "number" || it.priceUSD <= 0 || !Number.isInteger(it.quantity) || it.quantity <= 0) {
+    if (!it?.id || typeof it.id !== "string" || !Number.isInteger(it.quantity) || it.quantity <= 0 || it.quantity > 100) {
       return bad(400, "Item inválido en el carrito");
     }
+    const entry = CATALOG[it.id];
+    if (!entry) return bad(400, `Producto desconocido: ${it.id}`);
+    trustedItems.push({
+      id: it.id,
+      name: entry.name,
+      priceUSD: entry.priceUSD,
+      quantity: it.quantity,
+      image: typeof it.image === "string" ? it.image : undefined,
+    });
   }
 
-  const totalAmount = body.items.reduce((s, i) => s + i.priceUSD * i.quantity, 0);
+  const totalAmount = trustedItems.reduce((s, i) => s + i.priceUSD * i.quantity, 0);
   let successUrl: string;
 
   try {
@@ -109,7 +120,7 @@ Deno.serve(async (req) => {
       customer_email: body.customer.email,
       customer_phone: body.customer.phone,
       customer_address: body.customer.address,
-      items: body.items,
+      items: trustedItems,
       total_amount: totalAmount,
       currency: "USD",
       payment_method: "stripe",
