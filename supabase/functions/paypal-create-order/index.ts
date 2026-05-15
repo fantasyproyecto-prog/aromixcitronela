@@ -8,7 +8,16 @@ const corsHeaders = {
 
 const PAYPAL_BASE = "https://api-m.paypal.com"; // LIVE
 
-interface ItemIn { id: string; name: string; priceUSD: number; quantity: number; image?: string; }
+interface ItemIn { id: string; name?: string; priceUSD?: number; quantity: number; image?: string; }
+
+// Authoritative server-side catalog. Client-supplied prices/names are ignored.
+const CATALOG: Record<string, { name: string; priceUSD: number }> = {
+  "dispensador": { name: "Dispensador Aromix", priceUSD: 22.0 },
+  "refill": { name: "Refill Aromix", priceUSD: 23.5 },
+  "combo-1": { name: "Combo 1 (Dispensador + Refill)", priceUSD: 44.0 },
+  "combo-4": { name: "Combo 4 Refills", priceUSD: 168.0 },
+  "combo-6": { name: "Combo 6 Refills", priceUSD: 234.0 },
+};
 interface Body {
   customer: { name: string; email: string; phone: string; address: string };
   shipping: { courier: string; summary: string; state?: string; office?: string; other?: { company: string; state: string; address: string } | null };
@@ -55,13 +64,23 @@ Deno.serve(async (req) => {
   }
   if (!Array.isArray(body.items) || body.items.length === 0) return bad(400, "El carrito está vacío");
   if (!body.shipping?.courier || !body.shipping?.summary) return bad(400, "Datos de envío incompletos");
+  const trustedItems: Array<{ id: string; name: string; priceUSD: number; quantity: number; image?: string }> = [];
   for (const it of body.items) {
-    if (!it.name || typeof it.priceUSD !== "number" || it.priceUSD <= 0 || !Number.isInteger(it.quantity) || it.quantity <= 0) {
+    if (!it?.id || typeof it.id !== "string" || !Number.isInteger(it.quantity) || it.quantity <= 0 || it.quantity > 100) {
       return bad(400, "Item inválido en el carrito");
     }
+    const entry = CATALOG[it.id];
+    if (!entry) return bad(400, `Producto desconocido: ${it.id}`);
+    trustedItems.push({
+      id: it.id,
+      name: entry.name,
+      priceUSD: entry.priceUSD,
+      quantity: it.quantity,
+      image: typeof it.image === "string" ? it.image : undefined,
+    });
   }
 
-  const totalAmount = body.items.reduce((s, i) => s + i.priceUSD * i.quantity, 0);
+  const totalAmount = trustedItems.reduce((s, i) => s + i.priceUSD * i.quantity, 0);
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
@@ -72,7 +91,7 @@ Deno.serve(async (req) => {
       customer_email: body.customer.email,
       customer_phone: body.customer.phone,
       customer_address: body.customer.address,
-      items: body.items,
+      items: trustedItems,
       total_amount: totalAmount,
       currency: "USD",
       payment_method: "paypal",
@@ -94,7 +113,7 @@ Deno.serve(async (req) => {
   try {
     const accessToken = await getAccessToken(PAYPAL_CLIENT_ID, PAYPAL_SECRET);
 
-    const itemsTotal = body.items.reduce((s, i) => s + i.priceUSD * i.quantity, 0);
+    const itemsTotal = totalAmount;
 
     const ppRes = await fetch(`${PAYPAL_BASE}/v2/checkout/orders`, {
       method: "POST",
@@ -107,7 +126,7 @@ Deno.serve(async (req) => {
         purchase_units: [{
           reference_id: order.id,
           custom_id: order.id,
-          description: `Pedido Aromix Citronela #${order.id.slice(0, 8)}`,
+          description: `Pedido Aromix #${order.id.slice(0, 8)}`,
           amount: {
             currency_code: "USD",
             value: itemsTotal.toFixed(2),
@@ -115,7 +134,7 @@ Deno.serve(async (req) => {
               item_total: { currency_code: "USD", value: itemsTotal.toFixed(2) },
             },
           },
-          items: body.items.map((i) => ({
+          items: trustedItems.map((i) => ({
             name: i.name.slice(0, 127),
             quantity: String(i.quantity),
             unit_amount: { currency_code: "USD", value: i.priceUSD.toFixed(2) },

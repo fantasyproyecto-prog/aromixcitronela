@@ -9,11 +9,20 @@ const corsHeaders = {
 
 interface ItemIn {
   id: string;
-  name: string;
-  priceUSD: number;
+  name?: string;
+  priceUSD?: number;
   quantity: number;
   image?: string;
 }
+
+// Authoritative server-side catalog. Client-supplied prices/names are ignored.
+const CATALOG: Record<string, { name: string; priceUSD: number }> = {
+  "dispensador": { name: "Dispensador Aromix", priceUSD: 22.0 },
+  "refill": { name: "Refill Aromix", priceUSD: 23.5 },
+  "combo-1": { name: "Combo 1 (Dispensador + Refill)", priceUSD: 44.0 },
+  "combo-4": { name: "Combo 4 Refills", priceUSD: 168.0 },
+  "combo-6": { name: "Combo 6 Refills", priceUSD: 234.0 },
+};
 
 interface Body {
   customer: {
@@ -71,13 +80,24 @@ Deno.serve(async (req) => {
   if (!body.successUrl || !body.cancelUrl) {
     return bad(400, "URLs de redirección requeridas");
   }
+  // Server-side price recalculation: ignore client-supplied prices/names.
+  const trustedItems: Array<{ id: string; name: string; priceUSD: number; quantity: number; image?: string }> = [];
   for (const it of body.items) {
-    if (!it.name || typeof it.priceUSD !== "number" || it.priceUSD <= 0 || !Number.isInteger(it.quantity) || it.quantity <= 0) {
+    if (!it?.id || typeof it.id !== "string" || !Number.isInteger(it.quantity) || it.quantity <= 0 || it.quantity > 100) {
       return bad(400, "Item inválido en el carrito");
     }
+    const entry = CATALOG[it.id];
+    if (!entry) return bad(400, `Producto desconocido: ${it.id}`);
+    trustedItems.push({
+      id: it.id,
+      name: entry.name,
+      priceUSD: entry.priceUSD,
+      quantity: it.quantity,
+      image: typeof it.image === "string" ? it.image : undefined,
+    });
   }
 
-  const totalAmount = body.items.reduce((s, i) => s + i.priceUSD * i.quantity, 0);
+  const totalAmount = trustedItems.reduce((s, i) => s + i.priceUSD * i.quantity, 0);
   let successUrl: string;
 
   try {
@@ -100,7 +120,7 @@ Deno.serve(async (req) => {
       customer_email: body.customer.email,
       customer_phone: body.customer.phone,
       customer_address: body.customer.address,
-      items: body.items,
+      items: trustedItems,
       total_amount: totalAmount,
       currency: "USD",
       payment_method: "stripe",
@@ -122,18 +142,15 @@ Deno.serve(async (req) => {
   // 2. Crear sesión de Stripe Checkout
   const stripe = new Stripe(STRIPE_SECRET_KEY, { apiVersion: "2024-12-18.acacia" });
 
-  console.log("[create-stripe-checkout] order created", order.id, "items:", body.items.length);
+  console.log("[create-stripe-checkout] order created", order.id, "items:", trustedItems.length);
 
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       payment_method_types: ["card"],
       customer_email: body.customer.email,
-      line_items: body.items.map((i) => {
+      line_items: trustedItems.map((i) => {
         const isAbsoluteUrl = typeof i.image === "string" && /^https?:\/\//i.test(i.image);
-        if (i.image && !isAbsoluteUrl) {
-          console.log(`Omitiendo imagen no-absoluta para "${i.name}": ${i.image}`);
-        }
         return {
           quantity: i.quantity,
           price_data: {
