@@ -263,7 +263,8 @@ const CheckoutForm = () => {
       setSuccess(true);
     } catch (err) {
       console.error("Checkout error:", err);
-      toast.error("Error al enviar el pedido. Intenta de nuevo.");
+      const msg = err instanceof Error ? err.message : String(err ?? "");
+      toast.error(msg ? `Error al enviar el pedido: ${msg}` : "Error al enviar el pedido. Intenta de nuevo.");
     } finally {
       setSending(false);
     }

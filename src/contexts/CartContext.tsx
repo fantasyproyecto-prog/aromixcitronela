@@ -95,16 +95,48 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   useEffect(() => {
-    fetchBCVRate()
-      .then(({ rate, offline }) => {
-        setTasaBCV(rate);
-        if (offline) {
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let refreshInterval: ReturnType<typeof setInterval> | null = null;
+
+    const loadRate = async (isRetry = false) => {
+      try {
+        const { rate, offline } = await fetchBCVRate();
+        if (cancelled) return;
+        setTasaBCV((prev) => (rate > 0 ? rate : prev || FALLBACK_RATE));
+        if (offline && !isRetry) {
           toast.info("Tasa BCV obtenida offline", {
             description: `Usando tasa de respaldo: Bs ${rate.toFixed(2)}`,
           });
         }
-      })
-      .finally(() => setTasaLoading(false));
+        // Si fue offline, reintenta en 60s para intentar obtener la tasa real
+        if (offline && !cancelled) {
+          retryTimer = setTimeout(() => loadRate(true), 60_000);
+        }
+      } catch (e) {
+        console.error("fetchBCVRate crashed:", e);
+        if (!cancelled) {
+          setTasaBCV((prev) => prev || FALLBACK_RATE);
+          retryTimer = setTimeout(() => loadRate(true), 60_000);
+        }
+      } finally {
+        if (!cancelled) setTasaLoading(false);
+      }
+    };
+
+    loadRate();
+    // Refresca cada 30 minutos
+    refreshInterval = setInterval(() => loadRate(true), 30 * 60 * 1000);
+    // Refresca al volver a la pestaña
+    const onFocus = () => loadRate(true);
+    window.addEventListener("focus", onFocus);
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+      if (refreshInterval) clearInterval(refreshInterval);
+      window.removeEventListener("focus", onFocus);
+    };
   }, []);
 
   const addItem = useCallback((item: Omit<CartItem, "quantity">) => {
