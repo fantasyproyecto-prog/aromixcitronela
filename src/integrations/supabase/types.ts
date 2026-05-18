@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      exchange_rates: {
+        Row: {
+          code: string
+          error_count: number
+          fetched_at: string | null
+          last_error: string | null
+          last_success_at: string | null
+          rate: number
+          raw: Json | null
+          source: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          error_count?: number
+          fetched_at?: string | null
+          last_error?: string | null
+          last_success_at?: string | null
+          rate: number
+          raw?: Json | null
+          source?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          error_count?: number
+          fetched_at?: string | null
+          last_error?: string | null
+          last_success_at?: string | null
+          rate?: number
+          raw?: Json | null
+          source?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           created_at: string

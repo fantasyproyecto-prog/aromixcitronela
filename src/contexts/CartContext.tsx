@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface CartItem {
   id: string;
@@ -30,61 +30,24 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 const FALLBACK_RATE = 475.95;
+const BCV_CODE = "BCV_USD";
 
-async function fetchWithTimeout(url: string, timeoutMs = 5000): Promise<Response> {
-  const controller = new AbortController();
-  const id = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, { signal: controller.signal });
-    return res;
-  } finally {
-    clearTimeout(id);
-  }
+async function readStoredBCVRate(): Promise<number | null> {
+  const { data, error } = await supabase
+    .from("exchange_rates")
+    .select("rate")
+    .eq("code", BCV_CODE)
+    .maybeSingle();
+
+  if (error) throw error;
+  const rate = Number(data?.rate);
+  return Number.isFinite(rate) && rate > 0 ? rate : null;
 }
 
-async function fetchBCVRate(): Promise<{ rate: number; offline: boolean }> {
-  // Try primary API: ve.dolarapi.com
-  try {
-    const res = await fetchWithTimeout("https://ve.dolarapi.com/v1/dolares/oficial");
-    if (res.ok) {
-      const data = await res.json();
-      const price = data?.promedio ?? data?.precio;
-      if (price && typeof price === "number" && price > 0) {
-        return { rate: price, offline: false };
-      }
-    }
-  } catch (e) {
-    console.warn("Primary BCV API (dolarapi) failed:", e);
-  }
-
-  // Try second API: pydolarvenezuela
-  try {
-    const res = await fetchWithTimeout("https://pydolarvenezuela-api.vercel.app/api/v1/dollar?page=bcv");
-    if (res.ok) {
-      const data = await res.json();
-      const price = data?.monitors?.usd?.price ?? data?.dollar ?? data?.price;
-      if (price && typeof price === "number" && price > 0) {
-        return { rate: price, offline: false };
-      }
-    }
-  } catch (e) {
-    console.warn("Secondary BCV API (pydolar) failed:", e);
-  }
-
-  // Try third API: bcv-api.rafnixg.dev
-  try {
-    const res = await fetchWithTimeout("https://bcv-api.rafnixg.dev/rates/");
-    if (res.ok) {
-      const data = await res.json();
-      if (data?.dollar && typeof data.dollar === "number" && data.dollar > 0) {
-        return { rate: data.dollar, offline: false };
-      }
-    }
-  } catch (e) {
-    console.warn("Tertiary BCV API (rafnixg) failed:", e);
-  }
-
-  return { rate: FALLBACK_RATE, offline: true };
+async function refreshBCVRate(): Promise<number | null> {
+  const { error } = await supabase.functions.invoke("update-bcv-rate", { method: "POST" });
+  if (error) console.warn("BCV updater invocation failed; using stored rate", error);
+  return readStoredBCVRate();
 }
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -99,22 +62,23 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
     let refreshInterval: ReturnType<typeof setInterval> | null = null;
 
-    const loadRate = async (isRetry = false) => {
+    const loadRate = async (forceRefresh = false) => {
       try {
-        const { rate, offline } = await fetchBCVRate();
+        const storedRate = await readStoredBCVRate();
         if (cancelled) return;
-        setTasaBCV((prev) => (rate > 0 ? rate : prev || FALLBACK_RATE));
-        if (offline && !isRetry) {
-          toast.info("Tasa BCV obtenida offline", {
-            description: `Usando tasa de respaldo: Bs ${rate.toFixed(2)}`,
-          });
+
+        if (storedRate) {
+          setTasaBCV(storedRate);
+        } else {
+          setTasaBCV((prev) => prev || FALLBACK_RATE);
         }
-        // Si fue offline, reintenta en 60s para intentar obtener la tasa real
-        if (offline && !cancelled) {
-          retryTimer = setTimeout(() => loadRate(true), 60_000);
+
+        if (forceRefresh || !storedRate) {
+          const refreshedRate = await refreshBCVRate();
+          if (!cancelled && refreshedRate) setTasaBCV(refreshedRate);
         }
       } catch (e) {
-        console.error("fetchBCVRate crashed:", e);
+        console.error("BCV rate load failed:", e);
         if (!cancelled) {
           setTasaBCV((prev) => prev || FALLBACK_RATE);
           retryTimer = setTimeout(() => loadRate(true), 60_000);
@@ -124,7 +88,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    loadRate();
+    loadRate(true);
     // Refresca cada 30 minutos
     refreshInterval = setInterval(() => loadRate(true), 30 * 60 * 1000);
     // Refresca al volver a la pestaña
