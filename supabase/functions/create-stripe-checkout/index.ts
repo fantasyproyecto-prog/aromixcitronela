@@ -17,11 +17,11 @@ interface ItemIn {
 
 // Authoritative server-side catalog. Client-supplied prices/names are ignored.
 const CATALOG: Record<string, { name: string; priceUSD: number }> = {
-  "dispensador": { name: "Dispensador Aromix", priceUSD: 22.0 },
-  "refill": { name: "Refill Aromix", priceUSD: 23.5 },
-  "combo-1": { name: "Combo 1 (Dispensador + Refill)", priceUSD: 44.0 },
-  "combo-4": { name: "Combo 4 Refills", priceUSD: 168.0 },
-  "combo-6": { name: "Combo 6 Refills", priceUSD: 234.0 },
+  "dispensador": { name: "Dispensador Aromix Citronela", priceUSD: 22.0 },
+  "refill": { name: "Lata de Citronela Aromix (Refill)", priceUSD: 23.5 },
+  "combo-1": { name: "Combo Aromix (Dispensador & Citronela)", priceUSD: 44.0 },
+  "combo-4": { name: "Combo 4 Aromix (Dispensador & Citronela)", priceUSD: 168.0 },
+  "combo-6": { name: "Combo 6 Aromix (Dispensador & Citronela)", priceUSD: 234.0 },
 };
 
 interface Body {
