@@ -1,6 +1,7 @@
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
@@ -285,8 +286,9 @@ async function deleteReceipt(path: string) {
 }
 
 Deno.serve(async (req) => {
-  const dynamicCorsHeaders = getCorsHeaders(req);
-  if (req.method === "OPTIONS") return new Response("ok", { headers: dynamicCorsHeaders });
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
 
   try {
     if (!RESEND_API_KEY) throw new Error("RESEND_API_KEY no configurada");
@@ -295,14 +297,14 @@ Deno.serve(async (req) => {
     const authz = authorizeEmailRequest(req, payload);
     if (!authz.ok) {
       return new Response(JSON.stringify({ error: authz.error }), {
-        status: authz.status ?? 403, headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
+        status: authz.status ?? 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
     const { type, replyTo, receiptPath, to } = payload;
     const data = sanitizeData(type, payload.data ?? {});
     if (!type || !data) {
       return new Response(JSON.stringify({ error: "type y data son requeridos" }), {
-        status: 400, headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -348,7 +350,7 @@ Deno.serve(async (req) => {
     if (!res.ok) {
       console.error("Resend error:", result);
       return new Response(JSON.stringify({ error: result }), {
-        status: res.status, headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
+        status: res.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
@@ -356,12 +358,12 @@ Deno.serve(async (req) => {
     if (receiptPath) await deleteReceipt(receiptPath);
 
     return new Response(JSON.stringify({ ok: true, id: result.id }), {
-      status: 200, headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
+      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
     console.error("send-aromix-email error:", err);
     return new Response(JSON.stringify({ error: (err as Error).message }), {
-      status: 500, headers: { ...dynamicCorsHeaders, "Content-Type": "application/json" },
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
 });
