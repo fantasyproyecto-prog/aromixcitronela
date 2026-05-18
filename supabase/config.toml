@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.update-bcv-rate]
 verify_jwt = false
+
+[functions.send-aromix-email]
+verify_jwt = false
