@@ -11,10 +11,15 @@ const DEFAULT_TO = "Aromix.pa@gmail.com";
 const ALLOWED_ORIGINS = new Set([
   "https://aromixcitronela.lovable.app",
   "https://id-preview--2b6486c0-8c37-4f47-a9e7-67f09f28ab53.lovable.app",
+  "https://2b6486c0-8c37-4f47-a9e7-67f09f28ab53.lovableproject.com",
 ]);
+const isAllowedOrigin = (origin: string) =>
+  ALLOWED_ORIGINS.has(origin) ||
+  /^https:\/\/[a-z0-9-]+--2b6486c0-8c37-4f47-a9e7-67f09f28ab53\.lovable\.app$/i.test(origin) ||
+  /^https:\/\/2b6486c0-8c37-4f47-a9e7-67f09f28ab53\.lovableproject\.com$/i.test(origin);
 const getCorsHeaders = (req: Request) => {
   const origin = req.headers.get("origin") ?? "";
-  const allowedOrigin = ALLOWED_ORIGINS.has(origin) || /^https:\/\/[a-z0-9-]+--2b6486c0-8c37-4f47-a9e7-67f09f28ab53\.lovable\.app$/i.test(origin)
+  const allowedOrigin = isAllowedOrigin(origin)
     ? origin
     : "https://aromixcitronela.lovable.app";
   return { ...corsHeaders, "Access-Control-Allow-Origin": allowedOrigin, "Vary": "Origin" };
@@ -51,7 +56,7 @@ const publicSafeTypes = new Set(["checkout", "customer_pago_movil", "wholesale_l
 function authorizeEmailRequest(req: Request, payload: any) {
   if (isInternalRequest(req)) return { ok: true, headers: getCorsHeaders(req), internal: true };
   const origin = req.headers.get("origin") ?? "";
-  if (!ALLOWED_ORIGINS.has(origin) && !/^https:\/\/[a-z0-9-]+--2b6486c0-8c37-4f47-a9e7-67f09f28ab53\.lovable\.app$/i.test(origin)) {
+  if (!isAllowedOrigin(origin)) {
     return { ok: false, status: 403, error: "Origen no autorizado", headers: getCorsHeaders(req), internal: false };
   }
   if (!publicSafeTypes.has(payload?.type)) {
