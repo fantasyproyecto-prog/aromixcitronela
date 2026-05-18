@@ -29,7 +29,7 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-const FALLBACK_RATE = 475.95;
+const FALLBACK_RATE = 517.96;
 const BCV_CODE = "BCV_USD";
 
 async function readStoredBCVRate(): Promise<number | null> {
