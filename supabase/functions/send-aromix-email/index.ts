@@ -10,11 +10,14 @@ const DEFAULT_TO = "Aromix.pa@gmail.com";
 
 const ALLOWED_ORIGINS = new Set([
   "https://aromixcitronela.lovable.app",
+  "https://aromixcitronela.com",
+  "https://www.aromixcitronela.com",
   "https://id-preview--2b6486c0-8c37-4f47-a9e7-67f09f28ab53.lovable.app",
   "https://2b6486c0-8c37-4f47-a9e7-67f09f28ab53.lovableproject.com",
 ]);
 const isAllowedOrigin = (origin: string) =>
   ALLOWED_ORIGINS.has(origin) ||
+  /^https:\/\/([a-z0-9-]+\.)?aromixcitronela\.com$/i.test(origin) ||
   /^https:\/\/[a-z0-9-]+--2b6486c0-8c37-4f47-a9e7-67f09f28ab53\.lovable\.app$/i.test(origin) ||
   /^https:\/\/2b6486c0-8c37-4f47-a9e7-67f09f28ab53\.lovableproject\.com$/i.test(origin);
 const getCorsHeaders = (req: Request) => {
